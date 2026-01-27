@@ -1,6 +1,6 @@
 # .github/release.yml
 # WARNING this file is managed by terraform and cannot be edited manually, see
-# swissgeo/swissgeo-infra-terraform//github/swissgeo/modules/github-auto-release-notes-config/release_config.tf
+# swissgeo/infra-terraform//github/swissgeo/modules/github-auto-release-notes-config/release_config.tf
 
 changelog:
   exclude:
