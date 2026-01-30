@@ -1,0 +1,132 @@
+[project]
+name = "service-control"
+version = "0.0.0" # NOTE: the version is not used
+description = "Swissgeo control service"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "Flask~=3.1",
+    "ecs-logging~=2.2",
+    "gevent~=25.4",
+    "gunicorn~=23.0",
+    "logging-utilities~=5.3",
+    "pyyaml~=6.0",
+    "whitenoise~=6.11",
+    "boto3~=1.42",
+    "python-dotenv>=1.2.1",
+    "mypy>=1.19.1",
+    "types-pyyaml>=6.0.12.20250915",
+]
+
+[dependency-groups]
+dev = [
+    "debugpy",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "types-gevent~=25.4",
+    "types-gunicorn~=23.0",
+    "types-requests~=2.32",
+    "boto3-stubs[cognito-idp,ssm]~=1.42",
+    "ruff>=0.14.13",
+]
+
+[tool.uv]
+package = false # Do not install as a package
+
+
+#===============================================================================
+# Ruff configuration
+[tool.ruff]
+src = ["app"]
+
+# Same as Black.
+line-length = 100
+indent-width = 4
+
+# Assume Python 3.13
+target-version = "py313"
+
+#------------------------------------------------------------------------------
+# Linting configuration
+[tool.ruff.lint]
+exclude = [
+    "app/*/migrations/**",                          # Exclude django generated migrations files from linting
+    "app/dataset/management/commands/oarecords.py", # Exclude OAR stub generator during POC phase
+]
+select = ["ALL"]
+ignore = [
+    "ANN401", # Ignore Any typehint
+    "ANN002", # Ignore typehint for *args
+    "ANN003", # Ignore typehint for **kwargs
+    "D",      # Ignore pydocstyle
+    "EM",     # Ignore flake8-errmsg
+    "FBT001", # Ignore boolean-type-hint-positional-argument
+    "FBT002", # Ignore boolean-default-value-positional-argument
+    "PTH123", # Ignore builtin-open
+    "TD",     # Ignore flake8-todos
+    "FIX",    # Ignore fixme comments
+    "ERA001", # TODO remove this for production, ignore commented code
+    "I",      # isort TODO remove once isort is not used anymore
+    "Q",      # flake8-quotes TODO reactivate once we use also ruff for formatting
+    "COM812", # flak8-commas missing-trailing-comma is ignored to avoid conflict with formatter which enforces trailing commas
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+unfixable = []
+
+fixable = ["ALL"]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+#------------------------------------------------------------------------------
+# ruff ignore per files
+[tool.ruff.lint.per-file-ignores]
+
+"app/tests/**" = [
+    "S101",    # Ignore usage of assert statements in tests
+    "ANN201",  # Ignore missing return type hints in tests
+    "INP001",  # Ignore implicit namespace packages in tests
+    "ANN001",  # Ignore missing type hints in tests
+    "ARG001",  # Ignore unused function arguments in tests
+    "ARG005",  # Ignore unused lambda argument in tests
+    "PLR2004", # Ignore magic number in tests
+]
+
+"app/stubs/**" = [
+    "ANN", # Ignore flake8-annotations stubs
+]
+
+"app/*.py" = [
+    "INP001", # Ignore implicit namespace packages in root app files
+]
+
+#------------------------------------------------------------------------------
+# Isort configuration
+[tool.ruff.lint.isort]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "test",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+test = ["pytest"]
+
+#===============================================================================
+# Pytest configuration
+[tool.pytest]
+pythonpath = ["app"]
+python_files = ["test_*.py"]
+
+#==============================================================================
+# Coverage configuration
+[tool.coverage.run]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
