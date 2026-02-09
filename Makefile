@@ -135,9 +135,9 @@ type-check: ## Run the type-checker mypy
 	$(MYPY) app/
 
 
-.PHONY: start-local-dynamodb
-start-local-db: ## Run the local dynamodb
-	docker compose up -d
+.PHONY: start-localstack
+start-localstack: ## Run dynamodb and sqs locally
+	docker compose --env-file=${ENV_FILE} up -d
 
 
 .PHONY: test-ci
