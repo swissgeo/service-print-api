@@ -101,7 +101,7 @@ dockerlogin: ## Login to the AWS Docker Registry (ECR)
 
 .PHONY: dockerbuild
 dockerbuild: ## Create a docker image
-	docker build \
+	docker build --no-cache \
 		--build-arg GIT_HASH="$(GIT_HASH)" \
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
 		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
@@ -120,10 +120,9 @@ dockerrun: dockerbuild ## Run the locally built docker image
 	docker run \
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
-		--env DJANGO_SETTINGS_MODULE=config.settings_prod \
 		--env ALLOWED_HOSTS=127.0.0.1 \
 		--net=host \
-		$(DOCKER_IMG_LOCAL_TAG) ./wsgi.py
+		$(DOCKER_IMG_LOCAL_TAG) -m app.wsgi
 
 
 .PHONY: lint

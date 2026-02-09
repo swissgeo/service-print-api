@@ -4,13 +4,13 @@ import time
 from flask import Flask, Response, abort, g, request
 from werkzeug.exceptions import HTTPException
 
+from app.config.settings import CACHE_CONTROL, CACHE_CONTROL_4XX, STAGING
 from app.helpers.utils import (
     get_redirect_param,
     get_registered_method,
     is_domain_allowed,
     make_error_msg,
 )
-from app.settings import CACHE_CONTROL, CACHE_CONTROL_4XX, STAGING
 
 logger = logging.getLogger(__name__)
 

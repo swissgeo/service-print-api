@@ -3,7 +3,7 @@ import logging
 from flask import Response, jsonify, make_response
 
 from app.app import app
-from app.version import APP_VERSION
+from app.config.version import APP_VERSION
 
 logger = logging.getLogger(__name__)
 

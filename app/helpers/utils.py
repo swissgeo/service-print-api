@@ -11,7 +11,7 @@ import yaml
 from flask import Flask, Response, abort, jsonify, make_response, request
 from werkzeug.routing import Rule
 
-from app.settings import ALLOWED_DOMAINS_PATTERN
+from app.config.settings import ALLOWED_DOMAINS_PATTERN
 
 logger = logging.getLogger(__name__)
 
