@@ -41,6 +41,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 COPY --chown=${USER}:${GROUP} app/ ${INSTALL_DIR}/app/
+COPY --chown=${USER}:${GROUP} logging-cfg-*.yaml ${INSTALL_DIR}/
+RUN mkdir -p ${INSTALL_DIR}/logs && chown ${USER}:${GROUP} ${INSTALL_DIR}/logs
+
 
 ###########################################################
 # Container to perform tests/management/dev tasks
@@ -68,11 +71,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --locked
-
-# this is only used with the docker-compose setup within CI
-# to ensure that the app is only started once the DB container
-# is ready
-COPY ./wait-for-it.sh ${INSTALL_DIR}/app/
 
 COPY --from=builder ${INSTALL_DIR}/ ${INSTALL_DIR}/
 

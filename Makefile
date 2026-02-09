@@ -39,6 +39,9 @@ ENV_FILE ?= $(if $(wildcard .env.local),.env.local,.env)
 # export the env file so that uv picks it up in all recipes below
 export UV_ENV_FILE := $(ENV_FILE)
 
+# Logging
+LOGS_DIR = $(PWD)/logs
+
 .env:
 	cp .env.default .env
 
@@ -60,7 +63,7 @@ ci: .env
 
 
 .PHONY: setup
-setup:.env ## Create virtualenv with all packages for development
+setup: .env $(LOGS_DIR) ## Create virtualenv with all packages for development
 	uv sync
 	# Start a new zsh shell with the virtualenv activated and the .env file loaded into the environment
 	# variables. The later is required for django which reads the settings from the environment variables
@@ -86,7 +89,7 @@ ci-check-format: format ## Check the format (CI)
 .PHONY: serve
 serve: ## Serve the application locally
 	#ENV_FILE=.env LOGS_DIR=$(LOGS_DIR) FLASK_APP=service_launcher FLASK_DEBUG=1
-	$(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
+	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 
 .PHONY: gunicornserve
@@ -100,7 +103,7 @@ dockerlogin: ## Login to the AWS Docker Registry (ECR)
 
 
 .PHONY: dockerbuild
-dockerbuild: ## Create a docker image
+dockerbuild:  $(LOGS_DIR) ## Create a docker image
 	docker build --no-cache \
 		--build-arg GIT_HASH="$(GIT_HASH)" \
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
@@ -155,3 +158,6 @@ help: ## Display this help
 # automatically generate the help page based on the documentation after each make target
 # from https://gist.github.com/prwhite/8168133
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+$(LOGS_DIR):
+	mkdir -p -m=777 $(LOGS_DIR)

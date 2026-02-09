@@ -1,1 +1,1 @@
-APP_VERSION = "TOBY testing"
+APP_VERSION = "Is being set when building the docker image"
