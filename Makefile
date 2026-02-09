@@ -144,12 +144,12 @@ start-localstack: ## Run dynamodb and sqs locally
 
 
 .PHONY: test-ci
-test-ci: ## Run tests in the CI
+test-ci: $(LOGS_DIR) ## Run tests in the CI
 	$(TEST) --cov --cov-branch --cov-report=xml:coverage.xml
 
 
 .PHONY: test
-test: ## Run tests locally
+test: $(LOGS_DIR) ## Run tests locally
 	$(TEST) --cov --cov-branch --cov-report=html
 
 
