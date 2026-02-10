@@ -2,7 +2,7 @@
 # Container that contains basic configurations used by all other containers
 # It should only contain variables that don't change or change very infrequently
 # so that the cache is not needlessly invalidated
-FROM python:3.13-slim-trixie AS base
+FROM python:3.14-slim-trixie AS base
 ENV HTTP_PORT=8080
 ENV USER=swissgeo
 ENV GROUP=swissgeo
@@ -41,7 +41,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 COPY --chown=${USER}:${GROUP} app/ ${INSTALL_DIR}/app/
-COPY --chown=${USER}:${GROUP} logging-cfg-*.yaml ${INSTALL_DIR}/
 RUN mkdir -p ${INSTALL_DIR}/logs && chown ${USER}:${GROUP} ${INSTALL_DIR}/logs
 
 

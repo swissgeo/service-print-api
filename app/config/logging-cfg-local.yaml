@@ -31,7 +31,6 @@ loggers:
     level: INFO
 
 filters:
-
   isotime:
     (): logging_utilities.filters.TimeAttribute
     isotime: False
@@ -91,6 +90,10 @@ formatters:
       otelSpanID: otelSpanID
       otelTraceID: otelTraceID
       otelTraceSampled: otelTraceSampled
+  ecs:
+    (): ecs_logging.StdlibFormatter
+    # use this logger to pretty print the json output
+    # (): config.logging.PrettyStdlibFormatter
 
 handlers:
   console:
@@ -118,3 +121,7 @@ handlers:
     filters:
       - isotime
       - flask
+  console-ecs:
+    class: logging.StreamHandler
+    formatter: ecs
+    stream: ext://sys.stdout

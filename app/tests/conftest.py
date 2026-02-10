@@ -1,7 +1,12 @@
-from flask import Flask
-from flask.testing import FlaskClient
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from flask import Flask
+    from flask.testing import FlaskClient
 
 from app import create_app  # Adjust import to match your app structure
 

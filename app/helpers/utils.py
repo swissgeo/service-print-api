@@ -1,15 +1,21 @@
+from __future__ import annotations
+
 import logging
 import logging.config
 import os
 import re
 from itertools import chain
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import yaml
-from flask import Flask, Response, abort, jsonify, make_response, request
-from werkzeug.routing import Rule
+
+from flask import Response, abort, jsonify, make_response, request
+
+if TYPE_CHECKING:
+    from flask import Flask
+    from werkzeug.routing import Rule
 
 from app.config.settings import ALLOWED_DOMAINS_PATTERN
 
@@ -28,7 +34,7 @@ def strtobool(value: str) -> bool:
 
 
 def get_logging_cfg() -> Any:
-    cfg_file = os.getenv("LOGGING_CFG", "logging-cfg-local.yaml")
+    cfg_file = os.getenv("LOGGING_CFG", "app/config/logging-cfg-local.yaml")
     if "LOGS_DIR" not in os.environ:
         # Build paths inside the project like this: BASE_DIR / 'subdir'.
         logs_dir = Path(__file__).resolve(strict=True).parent.parent.parent / "logs"

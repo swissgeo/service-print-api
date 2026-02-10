@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 @app.route("/checker", methods=["GET"])
 def checker() -> Response:
+    logger.error("har")
     return make_response(jsonify({"success": True, "message": "OK", "version": APP_VERSION}), 200)
 
 
