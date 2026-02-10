@@ -14,17 +14,17 @@ dependencies = [
     "whitenoise~=6.11",
     "boto3~=1.42",
     "python-dotenv>=1.2",
-    "mypy>=1.19",
     "types-pyyaml>=6.0",
 ]
 
 [dependency-groups]
 dev = [
     "debugpy",
-    "mypy",
+    "ty",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
+    "boto3-stubs",
     "types-gevent~=25.4",
     "types-gunicorn~=23.0",
     "ruff>=0.14",
@@ -33,6 +33,14 @@ dev = [
 [tool.uv]
 package = false # Do not install as a package
 
+
+#===============================================================================
+# ty configuration
+[tool.ty.environment]
+root = ["."]
+
+[tool.ty.src]
+exclude = ["app/tests"]
 
 #===============================================================================
 # Ruff configuration
@@ -49,9 +57,6 @@ target-version = "py314"
 #------------------------------------------------------------------------------
 # Linting configuration
 [tool.ruff.lint]
-exclude = [
-    "app/dataset/management/commands/oarecords.py", # Exclude OAR stub generator during POC phase
-]
 select = ["ALL"]
 ignore = [
     "ANN401", # Ignore Any typehint
@@ -86,10 +91,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
     "ARG001",  # Ignore unused function arguments in tests
     "ARG005",  # Ignore unused lambda argument in tests
     "PLR2004", # Ignore magic number in tests
-]
-
-"app/stubs/**" = [
-    "ANN", # Ignore flake8-annotations stubs
 ]
 
 "app/*.py" = [

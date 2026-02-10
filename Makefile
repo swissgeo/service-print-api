@@ -25,7 +25,7 @@ UV_RUN := uv run
 PYTHON := $(UV_RUN) python3
 TEST := $(UV_RUN) pytest
 RUFF := $(UV_RUN) ruff
-MYPY := $(UV_RUN) mypy
+TY := $(UV_RUN) ty
 
 # Docker variables?
 DOCKER_REGISTRY = 074597099015.dkr.ecr.eu-central-1.amazonaws.com
@@ -129,13 +129,14 @@ dockerrun: dockerbuild ## Run the locally built docker image
 
 
 .PHONY: lint
-lint: ## Run the linter on the code base
+lint: ## Run the linter on the code base and type-checker ty
 	$(RUFF) check
+	$(TY) check app/
 
 
 .PHONY: type-check
-type-check: ## Run the type-checker mypy
-	$(MYPY) app/
+type-check: ## Run the type-checker ty
+
 
 
 .PHONY: start-localstack
