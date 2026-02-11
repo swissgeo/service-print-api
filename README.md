@@ -1,4 +1,4 @@
-# template-service-semver-public
+# service-print-api
 
 Template for service-semver public repository for the Swissgeo.
 

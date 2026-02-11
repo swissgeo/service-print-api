@@ -1,0 +1,127 @@
+version: 1
+disable_existing_loggers: False # this allow to get logger at module level
+
+root:
+  handlers:
+    - console
+    - file-standard
+    - file-json
+  level: DEBUG
+  propagate: True
+
+# Remove all handlers for werkzeug log entries - prevents duplicated logging
+loggers:
+  werkzeug:
+    handlers: []
+  gunicorn.error:
+    level: DEBUG
+    handlers:
+      - console
+      - file-standard
+      - file-json
+  gunicorn.access:
+    level: DEBUG
+    handlers:
+      - console
+      - file-standard
+      - file-json
+  botocore:
+    level: INFO
+  boto3:
+    level: INFO
+
+filters:
+  isotime:
+    (): logging_utilities.filters.TimeAttribute
+    isotime: False
+    utc_isotime: True
+  flask:
+    (): logging_utilities.filters.flask_attribute.FlaskRequestAttribute
+    attributes:
+      - path
+      - method
+      - headers
+      - remote_addr
+      - json
+      - query_string
+
+formatters:
+  standard:
+    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
+  verbose:
+    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
+    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
+    extra_fmt: " : path=%(flask_request_path)s headers=%(flask_request_headers)s payload=%(flask_request_json)s"
+  json:
+    (): logging_utilities.formatters.json_formatter.JsonFormatter
+    add_always_extra: False
+    filter_attributes:
+      - utc_isotime
+      - flask_request_path
+      - flask_request_method
+      - flask_request_query_string
+      - flask_request_headers
+      - flask_request_json
+      - flask_request_remote_addr
+    remove_empty: True
+    ignore_missing: True
+    fmt:
+      time: utc_isotime
+      level: levelname
+      logger: name
+      module: module
+      function: funcName
+      pidTid: "%(process)x/%(thread)x"
+      excInfo: exc_info
+      request:
+        id: flask_request_headers.X-Amz-Cf-Id
+        path: "%(flask_request_path)s"
+        method: "%(flask_request_method)s"
+        queryString: "%(flask_request_query_string)s"
+        headers: flask_request_headers.
+        remoteAddr: "%(flask_request_remote_addr)s"
+        payload: "%(flask_request_json).128s"
+      response:
+        statusCode: response.status_code
+        headers: response.headers.
+        duration: "%(duration)s"
+        payload: "%(response.json).128s"
+      message: message
+      otelSpanID: otelSpanID
+      otelTraceID: otelTraceID
+      otelTraceSampled: otelTraceSampled
+  ecs:
+    (): ecs_logging.StdlibFormatter
+    # use this logger to pretty print the json output
+    # (): config.logging.PrettyStdlibFormatter
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: standard
+    stream: ext://sys.stdout
+    filters:
+      - isotime
+      - flask
+  file-standard:
+    level: DEBUG
+    class: logging.FileHandler
+    formatter: verbose
+    filename: ${LOGS_DIR}/server-standard-logs.txt
+    mode: w
+    filters:
+      - isotime
+      - flask
+  file-json:
+    level: DEBUG
+    class: logging.FileHandler
+    formatter: json
+    filename: ${LOGS_DIR}/server-json-logs.json
+    mode: w
+    filters:
+      - isotime
+      - flask
+  console-ecs:
+    class: logging.StreamHandler
+    formatter: ecs
+    stream: ext://sys.stdout
