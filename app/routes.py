@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 from flask import Response, jsonify, make_response
 
@@ -10,15 +11,14 @@ logger = logging.getLogger(__name__)
 
 @app.route("/checker", methods=["GET"])
 def checker() -> Response:
-    logger.error("har")
     return make_response(jsonify({"success": True, "message": "OK", "version": APP_VERSION}), 200)
 
 
 @app.route("/favicon.ico")
-def favicon() -> Response | tuple[str, int]:
-    return "", 204  # No content
+def favicon() -> Response | tuple[str, HTTPStatus]:
+    return "", HTTPStatus.NO_CONTENT  # No content
 
 
 @app.route("/robots.txt")
-def robots() -> Response | tuple[str, int]:
-    return "", 204
+def robots() -> Response | tuple[str, HTTPStatus]:
+    return "", HTTPStatus.NO_CONTENT

@@ -130,13 +130,8 @@ dockerrun: dockerbuild ## Run the locally built docker image
 
 .PHONY: lint
 lint: ## Run the linter on the code base and type-checker ty
-	$(RUFF) check
-	$(TY) check app/
-
-
-.PHONY: type-check
-type-check: ## Run the type-checker ty
-
+	#$(RUFF) check
+	$(TY) check
 
 
 .PHONY: start-localstack

@@ -1,5 +1,6 @@
 import logging
 import time
+from http import HTTPStatus
 
 from flask import Flask, Response, g, request
 from werkzeug.exceptions import HTTPException
@@ -13,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_mapping({"TRAP_HTTP_EXCEPTIONS": True})
-
-HTTP_BAD_REQUEST_CODE = 400
 
 init_logging()
 
@@ -44,7 +43,7 @@ def add_cors_header(response: Response) -> Response:
 def add_cache_control_header(response: Response) -> Response:
     # For /checker route we let the frontend proxy decide how to cache it.
     if request.method == "GET" and request.endpoint != "checker":
-        if response.status_code >= HTTP_BAD_REQUEST_CODE:
+        if response.status_code >= HTTPStatus.BAD_REQUEST:
             response.headers.set("Cache-Control", CACHE_CONTROL_4XX)
         else:
             response.headers.set("Cache-Control", CACHE_CONTROL)

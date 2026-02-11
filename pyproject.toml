@@ -24,7 +24,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-xdist",
-    "boto3-stubs",
     "types-gevent~=25.4",
     "types-gunicorn~=23.0",
     "ruff>=0.14",
