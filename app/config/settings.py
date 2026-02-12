@@ -18,7 +18,7 @@ ALLOWED_DOMAINS_STRING = os.getenv("ALLOWED_DOMAINS", ".*")
 ALLOWED_DOMAINS = ALLOWED_DOMAINS_STRING.split(",")
 ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
 AWS_DYNAMODB_TABLE_NAME = os.environ.get("AWS_DYNAMODB_TABLE_NAME")
-AWS_DYNAMODB_PORT = os.environ.get("AWS_DYNAMODB_PORT", "4566")
+AWS_PORT = os.environ.get("AWS_PORT", "4566")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_ENDPOINT_URL = os.environ.get("AWS_ENDPOINT_URL", None)
 
@@ -34,6 +34,7 @@ GUNICORN_WORKER_TMP_DIR = os.getenv("GUNICORN_WORKER_TMP_DIR", None)
 GUNICORN_KEEPALIVE = int(os.getenv("GUNICORN_KEEPALIVE", "2"))
 
 DYNAMODB_TABLE: str = str(os.environ.get("DYNAMODB_TABLE", "service-print-api"))
+SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"))
 
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_DOC", "24"))
 

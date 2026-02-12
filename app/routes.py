@@ -9,12 +9,14 @@ from flask import Response, jsonify, make_response, request
 from app.app import app
 from app.config.settings import EXPIRATION_TIME_HH_PRINT_DOC
 from app.config.version import APP_VERSION
-from app.helpers.dynamo_db import get_dynamodb_table, insert_dynamodb, status_print
+from app.helpers.dynamo_db import get_dynamodb_table, get_print_job, insert_dynamodb
 from app.helpers.functions import (
+    build_job_response,
     get_hours_difference,
     get_iso_8601_timestamp,
     json_to_sha256_hash,
 )
+from app.helpers.sqs_queue import send_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -47,20 +49,41 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
             ):
                 # if not return directly the info about the already on S3 stored document
                 logger.info("Returning already registered print request")
-                return status_print(job_id)
-    # else, insert the payload to the dynamodb
-    return insert_dynamodb(payload)
+                return (build_job_response(item), HTTPStatus.OK)
+    # build the full item to insert into dynamodb and send to sqs
+    item = {
+        "job_id": job_id,
+        "created_timestamp_iso_8601": get_iso_8601_timestamp(),
+        "started_timestamp_iso_8601": "",
+        "finished_timestamp_iso_8601": "",
+        "message": "",
+        "payload": payload,
+        "status": "open",
+    }
+    try:
+        send_to_queue(item)
+        insert_dynamodb(item)
+    except ClientError:
+        return ({"error": "Error processing print job"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    return (build_job_response(item), HTTPStatus.ACCEPTED)
 
 
 @app.route("/jobs/<job_id>", methods=["GET"])
 def print_status(job_id: str) -> Response:
-    if job_id is None:
+    try:
+        item = get_print_job(job_id)
+    except ClientError:
         return make_response(
-            jsonify({"error": "list of jobs is not implemented"}), HTTPStatus.NOT_FOUND
+            jsonify({"error": "Error while looking for job_id"}),
+            HTTPStatus.INTERNAL_SERVER_ERROR,
         )
-    status_json, status_code = status_print(job_id)
-    logger.warning(status_json)
-    return make_response(jsonify(status_json), status_code)
+    if item is None:
+        return make_response(
+            jsonify({"warning": f"No entry found for job id {job_id}"}),
+            HTTPStatus.NOT_FOUND,
+        )
+    return make_response(jsonify(build_job_response(item)), HTTPStatus.OK)
 
 
 @app.route("/checker", methods=["GET"])

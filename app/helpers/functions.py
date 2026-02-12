@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,17 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
     except ValueError as e:
         logger.exception("Invalid date format. Please use ISO 8601")
         raise ValueError("Invalid date format. Please use ISO 8601") from e
+
+
+def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
+    """Build the standard job response dict from a DynamoDB item."""
+    return {
+        "status": item["status"],
+        "reportUrl": f"/jobs/{item['job_id']}",
+        "created": item["created_timestamp_iso_8601"],
+        "started": item["started_timestamp_iso_8601"],
+        "finished": item["finished_timestamp_iso_8601"],
+    }
 
 
 def get_job_id_from_path(path: str) -> str | None:
