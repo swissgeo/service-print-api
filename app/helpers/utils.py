@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import re
+from http import HTTPStatus
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -75,7 +76,7 @@ def get_redirect_param(ignore_errors: bool = False) -> bool:
     except ValueError as error:
         redirect = False
         if not ignore_errors:
-            abort(400, f'Invalid "redirect" arg: {error}')
+            abort(HTTPStatus.BAD_REQUEST, f'Invalid "redirect" arg: {error}')
     return redirect
 
 

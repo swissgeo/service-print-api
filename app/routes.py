@@ -55,7 +55,9 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
 @app.route("/jobs/<job_id>", methods=["GET"])
 def print_status(job_id: str) -> Response:
     if job_id is None:
-        return make_response(jsonify({"error": "list of jobs is not implemented"}), 404)
+        return make_response(
+            jsonify({"error": "list of jobs is not implemented"}), HTTPStatus.NOT_FOUND
+        )
     status_json, status_code = status_print(job_id)
     logger.warning(status_json)
     return make_response(jsonify(status_json), status_code)

@@ -70,6 +70,21 @@ def get_dynamodb_table() -> Table:
 
 
 def insert_dynamodb(payload: dict[str, Any]) -> tuple[dict[str, Any], HTTPStatus]:
+    """
+    Inserts a new print job into DynamoDB.
+
+    Creates a new item from the given payload, generating a SHA-256 hash as the
+    job ID and recording the current UTC timestamp as creation time. The job is
+    initialized with status "open".
+
+    Args:
+        payload: The print job request payload to store.
+
+    Returns:
+        A tuple of (response_dict, http_status) where response_dict contains
+        the job status, reportUrl, and timestamps. Returns HTTPStatus.ACCEPTED
+        on success or HTTPStatus.INTERNAL_SERVER_ERROR on failure.
+    """
     print_table = get_dynamodb_table()
 
     # set values
@@ -87,7 +102,6 @@ def insert_dynamodb(payload: dict[str, Any]) -> tuple[dict[str, Any], HTTPStatus
         "status": status,
     }
 
-    # init dynamodb
     logger.info(item_to_put)
     try:
         logger.info("Put to dynamodb")
@@ -110,6 +124,21 @@ def insert_dynamodb(payload: dict[str, Any]) -> tuple[dict[str, Any], HTTPStatus
 
 
 def status_print(job_id: str | None) -> tuple[dict[str, Any], HTTPStatus]:
+    """
+    Retrieves the current status of a print job from DynamoDB.
+
+    Looks up the job by its ID and returns its status, report URL,
+    and timestamps (created, started, finished).
+
+    Args:
+        job_id: The SHA-256 hash identifying the print job, or None.
+
+    Returns:
+        A tuple of (response_dict, http_status) where response_dict contains
+        the job details. Returns HTTPStatus.OK if found,
+        HTTPStatus.NOT_FOUND if no matching job exists, or
+        HTTPStatus.INTERNAL_SERVER_ERROR on DynamoDB errors.
+    """
     print_table = get_dynamodb_table()
     try:
         print_queued = print_table.get_item(Key={"job_id": job_id})
