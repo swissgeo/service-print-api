@@ -9,10 +9,13 @@
 
 - [Table of Content](#table-of-content)
 - [Summary Of The Project](#summary-of-the-project)
+- [Service API](#service-api)
+- [Versioning](#versioning)
 - [Local Development](#local-development)
   - [Dependencies](#dependencies)
   - [Setup](#setup)
   - [Updating Packages](#updating-packages)
+- [Deployment configuration](#deployment-configuration)
 
 
 
@@ -23,6 +26,24 @@
 After a client has POSTed (HTTP POST) a print command `service-print-api` returns an answer with an ID of this specific print command. With this ID the client can ask (via HTTP GET) the `service-print-api` about the status of the print.
 
 As soon as the print has been accomplished, the client recives a positive status with a link to download the created pdf document.
+
+## Service API
+
+[Here the REST API specification](https://swissgeoplatform.atlassian.net/wiki/spaces/PB/pages/105218145/Communication), which has been implemented as described.
+
+Furthermore there exists the checker GET endpoint to test, if the server is up:
+
+| Path | Method | Argument | Response Type |
+|------|--------|----------|---------------|
+| /checker | GET | - | application/json |
+| /jobs | POST | json (f.ex. post_print.sh) | application/json |
+| /jobs/<job_id> | GET | job_id | application/json |
+
+## Versioning
+
+This service uses [SemVer](https://semver.org/) as versioning scheme. The versioning is automatically handled by `.github/workflows/main.yml` file.
+
+See also [Git Flow - Versioning](https://github.com/geoadmin/doc-guidelines/blob/master/GIT_FLOW.md#versioning) for more information on the versioning guidelines.
 
 ## Local Development
 
@@ -72,3 +93,15 @@ To update packages to a new major release, run:
 ```bash
 uv add Flask~=3.1
 ```
+
+## Deployment configuration
+
+The service is configured by Environment Variable:
+
+| Env         | Default               | Description                            |
+|-------------|-----------------------|----------------------------------------|
+| DYNAMODB_TABLE_NAME | `'service-print-headless'` | The name of the dynamodb table with the info about pdf generation|
+| SQS_QUEUE_NAME | `service-print-queue` | The name of the sqs queue |
+| EXPIRATION_TIME_HH_PRINT_DOC | `24` | If a pdf already has been generated, the expiration time in hours before generating a new one |
+| AWS_LOCAL | - | Used for local development. Can be `local` for completely local development, `aws_poc` to interact with the aws poc accunt (will be deleted once) or nothing for a setup in a k8s environment. |
+
