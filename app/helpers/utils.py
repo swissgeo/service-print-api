@@ -4,19 +4,13 @@ import logging
 import logging.config
 import os
 import re
-from http import HTTPStatus
-from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urlparse
 
 import yaml
 
-from flask import Response, abort, jsonify, make_response, request
-
-if TYPE_CHECKING:
-    from flask import Flask
-    from werkzeug.routing import Rule
+from flask import Response, jsonify, make_response
 
 from app.config.settings import ALLOWED_DOMAINS_PATTERN
 
@@ -53,31 +47,6 @@ def get_logging_cfg() -> Any:
 def init_logging() -> None:
     config = get_logging_cfg()
     logging.config.dictConfig(config)
-
-
-def get_registered_method(app: Flask, url_rule: Rule | None) -> set[str]:
-    """Returns the list of registered method for the given endpoint"""
-
-    # The list of registered method is taken from the werkzeug.routing.Rule. A Rule object
-    # has a methods property with the list of allowed method on an endpoint. If this property is
-    # missing then all methods are allowed.
-    # See https://werkzeug.palletsprojects.com/en/2.0.x/routing/#werkzeug.routing.Rule
-    all_methods = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE"]
-    return set(
-        chain.from_iterable(
-            [r.methods or all_methods for r in app.url_map.iter_rules() if r.rule == str(url_rule)]
-        )
-    )
-
-
-def get_redirect_param(ignore_errors: bool = False) -> bool:
-    try:
-        redirect = strtobool(request.args.get("redirect", "true"))
-    except ValueError as error:
-        redirect = False
-        if not ignore_errors:
-            abort(HTTPStatus.BAD_REQUEST, f'Invalid "redirect" arg: {error}')
-    return redirect
 
 
 def make_error_msg(code: int | None, msg: str | None) -> Response:
