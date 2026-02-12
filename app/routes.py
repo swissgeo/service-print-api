@@ -43,7 +43,7 @@ def start_print() -> dict[str, Any]:
             now = get_iso_8601_timestamp()
             # is the document older than EXPIRATION_TIME_HH hours
             if (
-                get_hours_difference(now, item["created_timestamp_iso_8601"])
+                get_hours_difference(now, str(item["created_timestamp_iso_8601"]))
                 < EXPIRATION_TIME_HH_PRINT_DOC
             ):
                 # if not return directly the info about the already on S3 stored document

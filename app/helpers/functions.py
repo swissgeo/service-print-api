@@ -4,10 +4,14 @@ import json
 import logging
 import re
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import boto3
 from botocore.exceptions import ClientError
+
+if TYPE_CHECKING:
+    from mypy_boto3_dynamodb import DynamoDBServiceResource
+    from mypy_boto3_dynamodb.service_resource import Table
 
 from app.config.settings import AWS_DEFAULT_REGION, AWS_DYNAMODB_PORT, AWS_LOCAL, DYNAMODB_TABLE
 
@@ -137,7 +141,7 @@ def dict_to_http_response(
         raise TypeError("dictionary contains non-JSON serializable data") from e
 
 
-def get_dynamodb() -> Any:
+def get_dynamodb() -> DynamoDBServiceResource:
     """
     Initializes and returns a DynamoDB ServiceResource object.
 
@@ -157,14 +161,17 @@ def get_dynamodb() -> Any:
         # condition if working locally for development or not
         if AWS_LOCAL:
             logger.info("Connecting to locally running dynamodb")
-            dynamodb = boto3.resource(
-                "dynamodb",
-                endpoint_url=f"http://localhost:{AWS_DYNAMODB_PORT}",
-                region_name=AWS_DEFAULT_REGION,
+            dynamodb = cast(
+                "DynamoDBServiceResource",
+                boto3.resource(
+                    "dynamodb",
+                    endpoint_url=f"http://localhost:{AWS_DYNAMODB_PORT}",
+                    region_name=AWS_DEFAULT_REGION,
+                ),
             )
         else:
             logger.info("Connecting to dynamodb on aws")
-            dynamodb = boto3.resource("dynamodb")
+            dynamodb = cast("DynamoDBServiceResource", boto3.resource("dynamodb"))
     except ClientError:
         logger.exception("Error connecting dynamodb")
         raise
@@ -172,7 +179,7 @@ def get_dynamodb() -> Any:
         return dynamodb
 
 
-def get_dynamodb_table() -> Any:
+def get_dynamodb_table() -> Table:
     """
     Returns a high-level DynamoDB Table resource object for the specified table.
 
@@ -184,8 +191,8 @@ def get_dynamodb_table() -> Any:
         DynamoDBTableResource: The boto3 Table resource object for the table
                                defined by DYNAMODB_TABLE.
     """
-    dynamodb = get_dynamodb()
-    return dynamodb.Table(DYNAMODB_TABLE)
+    dynamodb: DynamoDBServiceResource = get_dynamodb()
+    return dynamodb.Table(DYNAMODB_TABLE)  # ty: ignore[unresolved-attribute]
 
 
 def get_job_id_from_path(path: str) -> str | None:
