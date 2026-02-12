@@ -78,12 +78,12 @@ def insert_dynamodb(item: dict[str, Any]) -> None:
     Raises:
         ClientError: If there is an issue inserting the item into DynamoDB.
     """
-    print_table = get_dynamodb_table()
+    dynamodb_table = get_dynamodb_table()
 
     logger.info(item)
     try:
         logger.info("Put to dynamodb")
-        put_response = print_table.put_item(Item=item)
+        put_response = dynamodb_table.put_item(Item=item)
         logger.info(put_response)
     except ClientError:
         logger.exception("Error updating dynamodb")
@@ -103,9 +103,9 @@ def get_print_job(job_id: str | None) -> dict[str, Any] | None:
     Raises:
         ClientError: If there is an issue querying DynamoDB.
     """
-    print_table = get_dynamodb_table()
+    dynamodb_table = get_dynamodb_table()
     try:
-        print_queued = print_table.get_item(Key={"job_id": job_id})
+        print_queued = dynamodb_table.get_item(Key={"job_id": job_id})
     except ClientError:
         logger.exception("Error looking up print job %s", job_id)
         raise

@@ -20,7 +20,7 @@ from app.helpers.sqs_queue import send_to_queue
 
 logger = logging.getLogger(__name__)
 
-dynamodb_print_table = get_dynamodb_table()  # get the dynamodb table
+dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
 
 @app.route("/jobs", methods=["POST"])
@@ -31,7 +31,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     # this error handling had to be done when the dynamodb has not entries yet
     # when job_id somehow does not exist jet (only appears on a brandnew table)
     try:
-        print_queued = dynamodb_print_table.get_item(Key={"job_id": job_id})
+        print_queued = dynamodb_table.get_item(Key={"job_id": job_id})
     except ClientError:
         logger.exception("Error getting item from dynamodb")
         print_queued = {}
