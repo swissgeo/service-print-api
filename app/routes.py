@@ -10,13 +10,13 @@ from app.app import app
 from app.config.settings import EXPIRATION_TIME_HH_PRINT_DOC
 from app.config.version import APP_VERSION
 from app.helpers.dynamo_db import get_dynamodb_table, get_print_job, insert_dynamodb
+from app.helpers.sqs_queue import send_to_queue
 from app.helpers.utils import (
     build_job_response,
     get_hours_difference,
     get_iso_8601_timestamp,
     json_to_sha256_hash,
 )
-from app.helpers.sqs_queue import send_to_queue
 
 logger = logging.getLogger(__name__)
 

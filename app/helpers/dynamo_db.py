@@ -8,7 +8,13 @@ if TYPE_CHECKING:
     from mypy_boto3_dynamodb import DynamoDBServiceResource
     from mypy_boto3_dynamodb.service_resource import Table
 
-from app.config.settings import AWS_DEFAULT_REGION, AWS_LOCAL, AWS_PORT, DYNAMODB_TABLE
+from app.config.settings import (
+    AWS_DEFAULT_REGION,
+    AWS_LOCAL,
+    AWS_PROFILE,
+    DYNAMODB_TABLE_NAME,
+    LOCALSTACK_PORT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,19 +36,26 @@ def get_dynamodb() -> DynamoDBServiceResource:
     """
     # init dynamodb
     try:
-        # condition if working locally for development or not
-        if AWS_LOCAL:
+        # condition if working locally for development
+        if AWS_LOCAL == "local":
             logger.info("Connecting to locally running dynamodb")
             dynamodb = cast(
                 "DynamoDBServiceResource",
                 boto3.resource(
                     "dynamodb",
-                    endpoint_url=f"http://localhost:{AWS_PORT}",
+                    endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
                     region_name=AWS_DEFAULT_REGION,
                 ),
             )
+        # condition if working locally using the dynamodb and sqs on the poc account
+        # TODO can be deleted when not using poc account anymore
+        elif AWS_LOCAL == "aws_poc":
+            logger.info("Your current profile is '%s'", AWS_PROFILE)
+            logger.info("Connecting to dynamodb on aws poc account")
+            session = boto3.Session(profile_name=AWS_PROFILE)
+            dynamodb = cast("DynamoDBServiceResource", session.resource("dynamodb"))
         else:
-            logger.info("Connecting to dynamodb on aws")
+            session = boto3.Session()
             dynamodb = cast("DynamoDBServiceResource", boto3.resource("dynamodb"))
     except ClientError:
         logger.exception("Error connecting dynamodb")
@@ -61,10 +74,10 @@ def get_dynamodb_table() -> Table:
 
     Returns:
         DynamoDBTableResource: The boto3 Table resource object for the table
-                               defined by DYNAMODB_TABLE.
+                               defined by DYNAMODB_TABLE_NAME.
     """
     dynamodb: DynamoDBServiceResource = get_dynamodb()
-    return dynamodb.Table(DYNAMODB_TABLE)  # ty: ignore[unresolved-attribute]
+    return dynamodb.Table(DYNAMODB_TABLE_NAME)  # ty: ignore[unresolved-attribute]
 
 
 def insert_dynamodb(item: dict[str, Any]) -> None:

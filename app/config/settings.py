@@ -17,26 +17,23 @@ if ENV_FILE:
 ALLOWED_DOMAINS_STRING = os.getenv("ALLOWED_DOMAINS", ".*")
 ALLOWED_DOMAINS = ALLOWED_DOMAINS_STRING.split(",")
 ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
-AWS_DYNAMODB_TABLE_NAME = os.environ.get("AWS_DYNAMODB_TABLE_NAME")
-AWS_PORT = os.environ.get("AWS_PORT", "4566")
+LOCALSTACK_PORT = os.environ.get("LOCALSTACK_PORT", "4566")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
-AWS_ENDPOINT_URL = os.environ.get("AWS_ENDPOINT_URL", None)
 
 CACHE_CONTROL = os.getenv("CACHE_CONTROL", "public, max-age=31536000")
 CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=3600")
 
-STAGING = os.getenv("STAGING", "DEV")
-
-COLLISION_MAX_RETRY = 10
-
-GUNICORN_WORKER_TMP_DIR = os.getenv("GUNICORN_WORKER_TMP_DIR", None)
-
-GUNICORN_KEEPALIVE = int(os.getenv("GUNICORN_KEEPALIVE", "2"))
-
-DYNAMODB_TABLE: str = str(os.environ.get("DYNAMODB_TABLE", "service-print-api"))
+DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-api"))
 SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"))
 
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_DOC", "24"))
 
 # AWS_LOCAL=true when running locally for development
-AWS_LOCAL: bool = bool(os.environ.get("AWS_LOCAL", "True"))
+AWS_LOCAL: str = str(os.environ.get("AWS_LOCAL", "local"))
+os.environ.pop("AWS_PROFILE", None)  # to be on the safe side
+AWS_PROFILE = None
+if AWS_LOCAL == "local":
+    os.environ["AWS_ACCESS_KEY_ID"] = "123"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "123"  # dummy key  # noqa: S105
+elif AWS_LOCAL == "aws_poc":
+    os.environ["AWS_PROFILE"] = "swisstopo-bgdi-poc-vectortiles"

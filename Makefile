@@ -6,7 +6,7 @@ SERVICE_NAME := service-print-api
 
 CURRENT_DIR := $(shell pwd)
 
-HTTP_PORT := 3000
+HTTP_PORT ?= 3000
 
 # Docker metadata
 GIT_HASH := $(shell git rev-parse HEAD)
@@ -36,8 +36,8 @@ AWS_DEFAULT_REGION = eu-central-1
 
 # Env file for dockerrun, defaults to .env.local / .env
 ENV_FILE ?= $(if $(wildcard .env.local),.env.local,.env)
-# export the env file so that uv picks it up in all recipes below
-export UV_ENV_FILE := $(ENV_FILE)
+# include the env file
+-include $(ENV_FILE)
 
 # Logging
 LOGS_DIR = $(PWD)/logs
@@ -88,7 +88,6 @@ ci-check-format: format ## Check the format (CI)
 
 .PHONY: serve
 serve: ## Serve the application locally
-	#ENV_FILE=.env LOGS_DIR=$(LOGS_DIR) FLASK_APP=service_launcher FLASK_DEBUG=1
 	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 

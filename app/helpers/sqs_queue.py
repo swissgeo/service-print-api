@@ -8,7 +8,13 @@ from botocore.exceptions import ClientError
 if TYPE_CHECKING:
     from mypy_boto3_sqs import SQSClient
 
-from app.config.settings import AWS_DEFAULT_REGION, AWS_LOCAL, AWS_PORT, SQS_QUEUE_NAME
+from app.config.settings import (
+    AWS_DEFAULT_REGION,
+    AWS_LOCAL,
+    AWS_PROFILE,
+    LOCALSTACK_PORT,
+    SQS_QUEUE_NAME,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +39,18 @@ def get_sqs_client() -> SQSClient:
             logger.info("Connecting to locally running SQS")
             sqs = boto3.client(
                 "sqs",
-                endpoint_url=f"http://localhost:{AWS_PORT}",
+                endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
                 region_name=AWS_DEFAULT_REGION,
             )
+        # condition if working locally using the dynamodb and sqs on the poc account
+        # TODO can be deleted when not using poc account anymore
+        elif AWS_LOCAL == "aws_poc":
+            logger.info("Connecting to SQS on AWS POC Account")
+            session = boto3.Session(profile_name=AWS_PROFILE)
+            sqs = session.client("sqs")
         else:
-            logger.info("Connecting to SQS on AWS")
             sqs = boto3.client("sqs")
+            session = boto3.Session(profile_name=AWS_PROFILE)
     except ClientError:
         logger.exception("Error connecting to SQS")
         raise
