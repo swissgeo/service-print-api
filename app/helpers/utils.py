@@ -64,11 +64,7 @@ def get_registered_method(app: Flask, url_rule: Rule | None) -> set[str]:
     all_methods = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE"]
     return set(
         chain.from_iterable(
-            [
-                r.methods if r.methods else all_methods
-                for r in app.url_map.iter_rules()
-                if r.rule == str(url_rule)
-            ]
+            [r.methods or all_methods for r in app.url_map.iter_rules() if r.rule == str(url_rule)]
         )
     )
 

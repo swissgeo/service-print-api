@@ -130,7 +130,7 @@ dockerrun: dockerbuild ## Run the locally built docker image
 
 .PHONY: lint
 lint: ## Run the linter on the code base and type-checker ty
-	#$(RUFF) check
+	$(RUFF) check
 	$(TY) check
 
 

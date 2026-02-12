@@ -63,6 +63,7 @@ ignore = [
     "ANN003", # Ignore typehint for **kwargs
     "D",      # Ignore pydocstyle
     "EM",     # Ignore flake8-errmsg
+    "TRY003", # Ignore long messages in exception constructors
     "FBT001", # Ignore boolean-type-hint-positional-argument
     "FBT002", # Ignore boolean-default-value-positional-argument
     "PTH123", # Ignore builtin-open

@@ -21,7 +21,7 @@ services:
       - dynamodb
       - create-table
       - --table-name
-      - service-print-headless
+      - service-print-api
       - --attribute-definitions
       - AttributeName=job_id,AttributeType=S
       - --key-schema
