@@ -31,6 +31,8 @@ EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_
 # AWS_LOCAL=true when running locally for development
 AWS_LOCAL: str = str(os.environ.get("AWS_LOCAL", "local"))
 os.environ.pop("AWS_PROFILE", None)  # to be on the safe side
+os.environ.pop("AWS_ACCESS_KEY_ID", None)  # to be on the safe side
+os.environ.pop("AWS_SECRET_ACCESS_KEY_ID", None)  # to be on the safe side
 AWS_PROFILE = None
 if AWS_LOCAL == "local":
     os.environ["AWS_ACCESS_KEY_ID"] = "123"
