@@ -3,17 +3,6 @@ import hashlib
 import json
 import logging
 import re
-from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, cast
-
-import boto3
-from botocore.exceptions import ClientError
-
-if TYPE_CHECKING:
-    from mypy_boto3_dynamodb import DynamoDBServiceResource
-    from mypy_boto3_dynamodb.service_resource import Table
-
-from app.config.settings import AWS_DEFAULT_REGION, AWS_DYNAMODB_PORT, AWS_LOCAL, DYNAMODB_TABLE
 
 logger = logging.getLogger(__name__)
 
@@ -106,93 +95,6 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
     except ValueError as e:
         logger.exception("Invalid date format. Please use ISO 8601")
         raise ValueError("Invalid date format. Please use ISO 8601") from e
-
-
-def dict_to_http_response(
-    data: dict[str, Any], http_status_code: HTTPStatus = HTTPStatus.OK
-) -> dict[str, Any]:
-    """
-    Converts a Python dictionary to a JSON string.
-
-    Args:
-        data: The dictionary to be converted. The keys are expected to be strings,
-              and values can be of any JSON-serializable type (e.g., str, int, float,
-              bool, None, list, or other dicts).
-
-    Returns:
-        A JSON formatted string representation of the dictionary.
-
-    Raises:
-        TypeError: If the dictionary or any of its nested values are not JSON serializable.
-    """
-    if http_status_code == HTTPStatus.OK:
-        logger.info(data)
-    else:
-        logger.warning(data)
-
-    try:
-        return {
-            "statusCode": http_status_code,
-            "body": json.dumps(data),
-            "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-        }
-    except TypeError as e:
-        logger.exception("dictionary contains non-JSON serializable data")
-        raise TypeError("dictionary contains non-JSON serializable data") from e
-
-
-def get_dynamodb() -> DynamoDBServiceResource:
-    """
-    Initializes and returns a DynamoDB ServiceResource object.
-
-    This function dynamically connects to either a local DynamoDB instance
-    (for development with AWS SAM) or to the AWS cloud-based service.
-    This behavior is controlled by the 'AWS_LOCAL' flag.
-
-    Returns:
-        DynamoDBServiceResource: A high-level boto3 ServiceResource object for DynamoDB.
-
-    Raises:
-        ClientError: If there is an issue connecting to the DynamoDB endpoint,
-                     such as network problems or invalid credentials.
-    """
-    # init dynamodb
-    try:
-        # condition if working locally for development or not
-        if AWS_LOCAL:
-            logger.info("Connecting to locally running dynamodb")
-            dynamodb = cast(
-                "DynamoDBServiceResource",
-                boto3.resource(
-                    "dynamodb",
-                    endpoint_url=f"http://localhost:{AWS_DYNAMODB_PORT}",
-                    region_name=AWS_DEFAULT_REGION,
-                ),
-            )
-        else:
-            logger.info("Connecting to dynamodb on aws")
-            dynamodb = cast("DynamoDBServiceResource", boto3.resource("dynamodb"))
-    except ClientError:
-        logger.exception("Error connecting dynamodb")
-        raise
-    else:
-        return dynamodb
-
-
-def get_dynamodb_table() -> Table:
-    """
-    Returns a high-level DynamoDB Table resource object for the specified table.
-
-    This function acts as a factory, creating a boto3 Table resource object
-    which provides a high-level, object-oriented interface for interacting
-    with a specific DynamoDB table.
-
-    Returns:
-        DynamoDBTableResource: The boto3 Table resource object for the table
-                               defined by DYNAMODB_TABLE.
-    """
-    dynamodb: DynamoDBServiceResource = get_dynamodb()
-    return dynamodb.Table(DYNAMODB_TABLE)  # ty: ignore[unresolved-attribute]
 
 
 def get_job_id_from_path(path: str) -> str | None:
