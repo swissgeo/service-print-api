@@ -2,7 +2,6 @@ import datetime
 import hashlib
 import json
 import logging
-import re
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -107,33 +106,3 @@ def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
         "started": item["started_timestamp_iso_8601"],
         "finished": item["finished_timestamp_iso_8601"],
     }
-
-
-def get_job_id_from_path(path: str) -> str | None:
-    """
-    Extracts a job ID from a given path string using a regular expression.
-
-    This function is designed to parse paths from an AWS Lambda Function URL or
-    an API Gateway HTTP API, where path parameters are not automatically
-    extracted. It looks for a path in the format "/jobs/{job_id}".
-
-    Args:
-        path: The path string to parse, e.g., "/jobs/123-abc-456".
-
-    Returns:
-        The extracted job ID as a string, or None if the path does not match
-        the expected pattern.
-    """
-    job_id = None
-    # Define the regex pattern to match the path
-    # The '(.*?)' is a capture group for the path parameter
-    path_pattern = re.compile(r"^/jobs/(?P<job_id>[^/]+)$")
-
-    # Try to match the path against the pattern
-    match = path_pattern.match(path)
-
-    if match:
-        # If a match is found, extract the named capture groups
-        path_parameters = match.groupdict()
-        job_id = str(path_parameters.get("job_id"))
-    return job_id

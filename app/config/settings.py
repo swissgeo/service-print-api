@@ -38,5 +38,5 @@ SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"
 
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_DOC", "24"))
 
-# SAM CLI sets AWS_LOCAL=true when invoking/starting locally
+# AWS_LOCAL=true when running locally for development
 AWS_LOCAL: bool = bool(os.environ.get("AWS_LOCAL", "True"))
