@@ -69,6 +69,14 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     return (build_job_response(item), HTTPStatus.ACCEPTED)
 
 
+@app.route("/jobs", methods=["GET"])
+def print_list() -> Response:
+    return make_response(
+        jsonify({"error": "Listening print jobs has not been implemented"}),
+        HTTPStatus.NOT_IMPLEMENTED,
+    )
+
+
 @app.route("/jobs/<job_id>", methods=["GET"])
 def print_status(job_id: str) -> Response:
     try:
