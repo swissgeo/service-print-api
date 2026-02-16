@@ -25,7 +25,10 @@ logger = logging.getLogger(__name__)
 @app.route("/jobs", methods=["POST"])
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
+try:
     validate_payload(payload)
+except ValueError as e:
+    return ({"error": str(e)}, HTTPStatus.BAD_REQUEST)
     job_id = json_to_sha256_hash(payload)
     dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
