@@ -7,7 +7,6 @@ random_payload=$(head -200 /dev/urandom | cksum | cut -f1 -d " ")
 #random_payload=42
 #curl --location --request POST 'https://5jel4tqfhdrsz3yriu3yz7wbvm0poynq.lambda-url.eu-central-1.on.aws/jobs' \
 curl -i --location --request POST 'http://localhost:3000/jobs' \
---header 'Idempotency-Key;' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "format": "a4",

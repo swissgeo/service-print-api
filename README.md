@@ -21,7 +21,7 @@
 
 ## Summary Of The Project
 
-`service-print-api` is as service that has been build to be communicating with a client, from whom its receiving print commands and putting them into a queue to be processed. Most probably this client is the new webmapviewer of swissgeo.
+`service-print-api` is as service that has been built to be communicating with a client, from whom its receiving print commands and putting them into a queue to be processed. Most probably this client is the new webmapviewer of swissgeo.
 
 After a client has POSTed (HTTP POST) a print command `service-print-api` returns an answer with an ID of this specific print command. With this ID the client can ask (via HTTP GET) the `service-print-api` about the status of the print.
 
@@ -100,7 +100,7 @@ The service is configured by Environment Variable:
 
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
-| DYNAMODB_TABLE_NAME | `'service-print-headless'` | The name of the dynamodb table with the info about pdf generation|
+| DYNAMODB_TABLE_NAME | `service-print-headless` | The name of the dynamodb table with the info about pdf generation|
 | SQS_QUEUE_NAME | `service-print-queue` | The name of the sqs queue |
 | EXPIRATION_TIME_HH_PRINT_DOC | `24` | If a pdf already has been generated, the expiration time in hours before generating a new one |
 | AWS_LOCAL | - | Used for local development. Can be `local` for completely local development, `aws_poc` to interact with the aws poc accunt (will be deleted once) or nothing for a setup in a k8s environment. |

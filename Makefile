@@ -91,8 +91,8 @@ serve: start-localstack ## Serve the application locally
 	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 
-.PHONY: start-localstack gunicornserve
-gunicornserve: ## Serve the application locally with gunicorn
+.PHONY: gunicornserve
+gunicornserve: start-localstack ## Serve the application locally with gunicorn
 	ENV_FILE=.env $(UV_RUN) gunicorn --bind 0.0.0.0:$(HTTP_PORT) --reload app.wsgi:app
 
 
@@ -117,8 +117,8 @@ dockerpush: dockerbuild ## Push to the docker registry
 	docker push $(DOCKER_IMG_LOCAL_TAG)
 
 
-.PHONY: start-localstack dockerrun
-dockerrun: dockerbuild ## Run the locally built docker image
+.PHONY: dockerrun
+dockerrun: start-localstack dockerbuild ## Run the locally built docker image
 	docker run \
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \

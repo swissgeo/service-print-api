@@ -25,9 +25,9 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "types-gevent~=25.4",
-    "types-gunicorn~=23.0",
+    "types-gunicorn~=25.1",
     "ruff>=0.14",
-    "boto3-stubs[dynamodb,sqs]>=1.42",
+    "boto3-stubs[dynamodb,sqs]~=1.42",
 ]
 
 [tool.uv]

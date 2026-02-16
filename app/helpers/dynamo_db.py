@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, cast
 
 import boto3
@@ -19,6 +20,7 @@ from app.config.settings import (
 logger = logging.getLogger(__name__)
 
 
+@lru_cache(maxsize=1)
 def get_dynamodb() -> DynamoDBServiceResource:
     """
     Initializes and returns a DynamoDB ServiceResource object.
@@ -96,8 +98,8 @@ def insert_dynamodb(item: dict[str, Any]) -> None:
     logger.info(item)
     try:
         logger.info("Put to dynamodb")
-        put_response = dynamodb_table.put_item(Item=item)
-        logger.info(put_response)
+        dynamodb_table.put_item(Item=item)
+        logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
     except ClientError:
         logger.exception("Error updating dynamodb")
         raise

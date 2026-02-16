@@ -27,12 +27,13 @@ DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-pr
 SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"))
 
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_DOC", "24"))
+MAX_PAYLOAD_SIZE_BYTES: int = int(os.environ.get("MAX_PAYLOAD_SIZE_BYTES", str(100 * 1024)))
 
-# AWS_LOCAL=true when running locally for development
+# AWS_LOCAL=local when running locally for development
 AWS_LOCAL: str = str(os.environ.get("AWS_LOCAL", "local"))
 os.environ.pop("AWS_PROFILE", None)  # to be on the safe side
 os.environ.pop("AWS_ACCESS_KEY_ID", None)  # to be on the safe side
-os.environ.pop("AWS_SECRET_ACCESS_KEY_ID", None)  # to be on the safe side
+os.environ.pop("AWS_SECRET_ACCESS_KEY", None)  # to be on the safe side
 AWS_PROFILE = None
 if AWS_LOCAL == "local":
     os.environ["AWS_ACCESS_KEY_ID"] = "123"

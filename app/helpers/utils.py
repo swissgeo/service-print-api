@@ -15,7 +15,7 @@ import yaml
 
 from flask import Response, jsonify, make_response
 
-from app.config.settings import ALLOWED_DOMAINS_PATTERN
+from app.config.settings import ALLOWED_DOMAINS_PATTERN, MAX_PAYLOAD_SIZE_BYTES
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +155,21 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
     except ValueError as e:
         logger.exception("Invalid date format. Please use ISO 8601")
         raise ValueError("Invalid date format. Please use ISO 8601") from e
+
+
+def validate_payload(payload: Any) -> None:
+    """Validate the incoming request payload.
+
+    Raises:
+        ValueError: If the payload is None or exceeds MAX_PAYLOAD_SIZE_BYTES.
+    """
+    if payload is None:
+        raise ValueError("Payload must not be None")
+    payload_size = len(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    if payload_size > MAX_PAYLOAD_SIZE_BYTES:
+        raise ValueError(
+            f"Payload size {payload_size} bytes exceeds limit of {MAX_PAYLOAD_SIZE_BYTES} bytes"
+        )
 
 
 def build_job_response(item: dict[str, Any]) -> dict[str, Any]:

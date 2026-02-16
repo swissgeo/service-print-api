@@ -35,7 +35,7 @@ def get_sqs_client() -> SQSClient:
                      such as network problems or invalid credentials.
     """
     try:
-        if AWS_LOCAL:
+        if AWS_LOCAL == "local":
             logger.info("Connecting to locally running SQS")
             sqs = boto3.client(
                 "sqs",

@@ -16,17 +16,18 @@ from app.helpers.utils import (
     get_hours_difference,
     get_iso_8601_timestamp,
     json_to_sha256_hash,
+    validate_payload,
 )
 
 logger = logging.getLogger(__name__)
-
-dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
 
 @app.route("/jobs", methods=["POST"])
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
+    validate_payload(payload)
     job_id = json_to_sha256_hash(payload)
+    dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
     # this error handling had to be done when the dynamodb has not entries yet
     # when job_id somehow does not exist jet (only appears on a brandnew table)
@@ -44,7 +45,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
             now = get_iso_8601_timestamp()
             # is the document older than EXPIRATION_TIME_HH hours
             if (
-                get_hours_difference(now, str(item["created_timestamp_iso_8601"]))
+                get_hours_difference(str(item["created_timestamp_iso_8601"]), now)
                 < EXPIRATION_TIME_HH_PRINT_DOC
             ):
                 # if not return directly the info about the already on S3 stored document
@@ -56,15 +57,20 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
         "created_timestamp_iso_8601": get_iso_8601_timestamp(),
         "started_timestamp_iso_8601": "",
         "finished_timestamp_iso_8601": "",
-        "message": "",
         "payload": payload,
         "status": "open",
     }
     try:
         send_to_queue(item)
+    except ClientError:
+        logger.exception("Error sending item to SQS queue")
+        return ({"error": "Error sending print job to queue"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    try:
         insert_dynamodb(item)
     except ClientError:
-        return ({"error": "Error processing print job"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        logger.exception("Error inserting item into DynamoDB")
+        return ({"error": "Error storing print job in database"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return (build_job_response(item), HTTPStatus.ACCEPTED)
 
@@ -72,7 +78,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
 @app.route("/jobs", methods=["GET"])
 def print_list() -> Response:
     return make_response(
-        jsonify({"error": "Listening print jobs has not been implemented"}),
+        jsonify({"error": "Print job listing has not been implemented"}),
         HTTPStatus.NOT_IMPLEMENTED,
     )
 
