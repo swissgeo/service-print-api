@@ -117,8 +117,10 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
         (e.g., '2023-10-28T12:30:00+00:00').
 
     Returns:
-        The difference in hours as a float. Returns 0.0 and prints an error
-        if the date strings are not in the correct format.
+        The difference in hours as a float.
+
+    Raises:
+        ValueError: If the date strings are not in valid ISO 8601 format.
     """
     try:
         # Parse the ISO 8601 strings into datetime objects.
