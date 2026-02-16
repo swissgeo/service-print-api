@@ -62,6 +62,8 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
         "finished_timestamp_iso_8601": "",
         "payload": payload,
         "status": "open",
+        "pdf_url": "",
+        "message": "",
     }
     try:
         send_to_queue(item)
