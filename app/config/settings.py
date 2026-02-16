@@ -29,14 +29,8 @@ SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPIRATION_TIME_HH_PRINT_DOC", "24"))
 MAX_PAYLOAD_SIZE_BYTES: int = int(os.environ.get("MAX_PAYLOAD_SIZE_BYTES", str(100 * 1024)))
 
-# AWS_LOCAL=local when running locally for development
-AWS_LOCAL: str = str(os.environ.get("AWS_LOCAL", "local"))
-os.environ.pop("AWS_PROFILE", None)  # to be on the safe side
-os.environ.pop("AWS_ACCESS_KEY_ID", None)  # to be on the safe side
-os.environ.pop("AWS_SECRET_ACCESS_KEY", None)  # to be on the safe side
-AWS_PROFILE = None
-if AWS_LOCAL == "local":
+# AWS_LOCAL
+AWS_LOCAL: bool = os.environ.get("AWS_LOCAL", "false").lower() == "true"
+if AWS_LOCAL:
     os.environ["AWS_ACCESS_KEY_ID"] = "123"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "123"  # dummy key  # noqa: S105
-elif AWS_LOCAL == "aws_poc":
-    os.environ["AWS_PROFILE"] = "swisstopo-bgdi-poc-vectortiles"

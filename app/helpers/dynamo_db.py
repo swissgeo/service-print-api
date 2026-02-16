@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 from app.config.settings import (
     AWS_DEFAULT_REGION,
     AWS_LOCAL,
-    AWS_PROFILE,
     DYNAMODB_TABLE_NAME,
     LOCALSTACK_PORT,
 )
@@ -39,7 +38,7 @@ def get_dynamodb() -> DynamoDBServiceResource:
     # init dynamodb
     try:
         # condition if working locally for development
-        if AWS_LOCAL == "local":
+        if AWS_LOCAL:
             logger.info("Connecting to locally running dynamodb")
             dynamodb = cast(
                 "DynamoDBServiceResource",
@@ -49,15 +48,7 @@ def get_dynamodb() -> DynamoDBServiceResource:
                     region_name=AWS_DEFAULT_REGION,
                 ),
             )
-        # condition if working locally using the dynamodb and sqs on the poc account
-        # TODO can be deleted when not using poc account anymore
-        elif AWS_LOCAL == "aws_poc":
-            logger.info("Your current profile is '%s'", AWS_PROFILE)
-            logger.info("Connecting to dynamodb on aws poc account")
-            session = boto3.Session(profile_name=AWS_PROFILE)
-            dynamodb = cast("DynamoDBServiceResource", session.resource("dynamodb"))
         else:
-            session = boto3.Session()
             dynamodb = cast("DynamoDBServiceResource", boto3.resource("dynamodb"))
     except ClientError:
         logger.exception("Error connecting dynamodb")

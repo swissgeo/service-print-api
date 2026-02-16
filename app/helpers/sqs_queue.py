@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 from app.config.settings import (
     AWS_DEFAULT_REGION,
     AWS_LOCAL,
-    AWS_PROFILE,
     LOCALSTACK_PORT,
     SQS_QUEUE_NAME,
 )
@@ -37,22 +36,15 @@ def get_sqs_client() -> SQSClient:
                      such as network problems or invalid credentials.
     """
     try:
-        if AWS_LOCAL == "local":
+        if AWS_LOCAL:
             logger.info("Connecting to locally running SQS")
             sqs = boto3.client(
                 "sqs",
                 endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
                 region_name=AWS_DEFAULT_REGION,
             )
-        # condition if working locally using the dynamodb and sqs on the poc account
-        # TODO can be deleted when not using poc account anymore
-        elif AWS_LOCAL == "aws_poc":
-            logger.info("Connecting to SQS on AWS POC Account")
-            session = boto3.Session(profile_name=AWS_PROFILE)
-            sqs = session.client("sqs")
         else:
             sqs = boto3.client("sqs")
-            session = boto3.Session()
     except ClientError:
         logger.exception("Error connecting to SQS")
         raise
