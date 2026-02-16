@@ -15,7 +15,7 @@ from app.helpers.utils import (
     build_job_response,
     get_hours_difference,
     get_iso_8601_timestamp,
-    json_to_sha256_hash,
+    dict_to_sha256_hash,
     validate_payload,
 )
 
@@ -29,7 +29,7 @@ try:
     validate_payload(payload)
 except ValueError as e:
     return ({"error": str(e)}, HTTPStatus.BAD_REQUEST)
-    job_id = json_to_sha256_hash(payload)
+    job_id = dict_to_sha256_hash(payload)
     dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
     # this error handling had to be done when the dynamodb has not entries yet

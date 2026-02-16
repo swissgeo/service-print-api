@@ -67,39 +67,23 @@ def is_domain_allowed(url: str) -> bool:
     return False
 
 
-def json_to_sha256_hash(json_object: dict[str, object]) -> str:
+def dict_to_sha256_hash(data: dict[str, object]) -> str:
     """
-    Converts a JSON object into a consistent SHA-256 hash.
+    Converts a dictionary into a consistent SHA-256 hash.
 
-    To ensure consistency (e.g., for JSON strings with different key orders
-    or whitespace but identical content), the function first parses the
-    JSON string and then re-serializes it into a canonical form
-    (sorted keys, no indentation) before hashing.
+    To ensure consistency (e.g., for dicts with different key orders but
+    identical content), the function serializes the dict into a canonical
+    JSON form (sorted keys, no whitespace) before hashing.
 
     Args:
-        json_string: The input JSON string.
+        data: The input dictionary.
 
     Returns:
         A string representing the SHA-256 hash in hexadecimal format.
     """
-    try:
-        # Re-serialize the object into a canonical JSON string.
-        # - sort_keys=True ensures consistent key order.
-        # - separators=(',', ':') removes all whitespace between items and keys/values.
-        # This step is crucial for consistent hashing of semantically identical JSON.
-        canonical_json_string = json.dumps(json_object, sort_keys=True, separators=(",", ":"))
-
-    except json.JSONDecodeError as e:
-        logger.exception("Invalid JSON string provided")
-        raise ValueError("Invalid JSON string provided") from e
-
-    # Encode the canonical JSON string to bytes (SHA-256 works on bytes)
+    canonical_json_string = json.dumps(data, sort_keys=True, separators=(",", ":"))
     encoded_json = canonical_json_string.encode("utf-8")
-
-    # Calculate the SHA-256 hash
     sha256_hash = hashlib.sha256(encoded_json)
-
-    # Return the hexadecimal representation of the hash
     return sha256_hash.hexdigest()
 
 

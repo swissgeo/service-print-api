@@ -39,6 +39,9 @@ ENV_FILE ?= $(if $(wildcard .env.local),.env.local,.env)
 # include the env file
 -include $(ENV_FILE)
 
+# export the env file so that uv picks it up in all recipes below
+export UV_ENV_FILE := $(ENV_FILE)
+
 # Logging
 LOGS_DIR = $(PWD)/logs
 

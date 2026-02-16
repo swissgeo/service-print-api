@@ -1,5 +1,6 @@
 import json
 import logging
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 import boto3
@@ -19,6 +20,7 @@ from app.config.settings import (
 logger = logging.getLogger(__name__)
 
 
+@lru_cache(maxsize=1)
 def get_sqs_client() -> SQSClient:
     """
     Initializes and returns an SQS client object.
@@ -50,7 +52,7 @@ def get_sqs_client() -> SQSClient:
             sqs = session.client("sqs")
         else:
             sqs = boto3.client("sqs")
-            session = boto3.Session(profile_name=AWS_PROFILE)
+            session = boto3.Session()
     except ClientError:
         logger.exception("Error connecting to SQS")
         raise
