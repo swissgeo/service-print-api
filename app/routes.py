@@ -13,9 +13,9 @@ from app.helpers.dynamo_db import get_dynamodb_table, get_print_job, insert_dyna
 from app.helpers.sqs_queue import send_to_queue
 from app.helpers.utils import (
     build_job_response,
+    dict_to_sha256_hash,
     get_hours_difference,
     get_iso_8601_timestamp,
-    dict_to_sha256_hash,
     validate_payload,
 )
 
@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 @app.route("/jobs", methods=["POST"])
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
-try:
-    validate_payload(payload)
-except ValueError as e:
-    return ({"error": str(e)}, HTTPStatus.BAD_REQUEST)
+    try:
+        validate_payload(payload)
+    except ValueError as e:
+        return ({"error": str(e)}, HTTPStatus.BAD_REQUEST)
     job_id = dict_to_sha256_hash(payload)
     dynamodb_table = get_dynamodb_table()  # get the dynamodb table
 
