@@ -26,7 +26,7 @@ CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=3600")
 DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-api"))
 SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"))
 
-EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPRATION_TIME_HH_PRINT_DOC", "24"))
+EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPIRATION_TIME_HH_PRINT_DOC", "24"))
 MAX_PAYLOAD_SIZE_BYTES: int = int(os.environ.get("MAX_PAYLOAD_SIZE_BYTES", str(100 * 1024)))
 
 # AWS_LOCAL=local when running locally for development
