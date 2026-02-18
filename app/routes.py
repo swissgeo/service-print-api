@@ -16,6 +16,7 @@ from app.helpers.utils import (
     dict_to_sha256_hash,
     get_hours_difference,
     get_iso_8601_timestamp,
+    get_ttl_timestamp,
     validate_payload,
 )
 
@@ -58,6 +59,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     item = {
         "job_id": job_id,
         "created_timestamp_iso_8601": get_iso_8601_timestamp(),
+        "ttl": get_ttl_timestamp(),
         "payload": payload,
         "status": "open",
     }

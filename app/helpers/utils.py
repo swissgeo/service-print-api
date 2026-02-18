@@ -15,7 +15,11 @@ import yaml
 
 from flask import Response, jsonify, make_response
 
-from app.config.settings import ALLOWED_DOMAINS_PATTERN, MAX_PAYLOAD_SIZE_BYTES
+from app.config.settings import (
+    ALLOWED_DOMAINS_PATTERN,
+    MAX_PAYLOAD_SIZE_BYTES,
+    TTL_DYNAMODB_ITEM_HH,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +108,20 @@ def get_iso_8601_timestamp() -> str:
     # .isoformat() automatically handles the 'T' separator and timezone offset.
     # For UTC, it will append '+00:00'.
     return now_utc.isoformat()
+
+
+def get_ttl_timestamp() -> int:
+    """Generates a Unix epoch timestamp for DynamoDB TTL.
+
+    The TTL is calculated as the current UTC time plus
+    TTL_DYNAMODB_ITEM_HH.
+
+    Returns:
+        An integer representing the expiration time as a Unix epoch timestamp.
+    """
+    now_utc = datetime.datetime.now(datetime.UTC)
+    ttl = now_utc + datetime.timedelta(hours=TTL_DYNAMODB_ITEM_HH)
+    return int(ttl.timestamp())
 
 
 def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
