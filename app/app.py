@@ -79,4 +79,6 @@ def handle_exception(err: Exception) -> Response:
         return make_error_msg(err.code, err.description)
 
     logger.exception("Unexpected exception: %s", err)
-    return make_error_msg(500, "Internal server error, please consult logs")
+    return make_error_msg(
+        HTTPStatus.INTERNAL_SERVER_ERROR, "Internal server error, please consult logs"
+    )

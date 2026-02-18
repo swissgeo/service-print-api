@@ -8,7 +8,7 @@ dependencies = [
     "Flask~=3.1",
     "ecs-logging~=2.2",
     "gevent~=25.4",
-    "gunicorn~=23.0",
+    "gunicorn~=25.0",
     "logging-utilities~=5.3",
     "pyyaml~=6.0",
     "whitenoise~=6.11",
@@ -25,8 +25,9 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "types-gevent~=25.4",
-    "types-gunicorn~=23.0",
+    "types-gunicorn~=25.1",
     "ruff>=0.14",
+    "boto3-stubs[dynamodb,sqs]~=1.42",
 ]
 
 [tool.uv]
@@ -63,6 +64,7 @@ ignore = [
     "ANN003", # Ignore typehint for **kwargs
     "D",      # Ignore pydocstyle
     "EM",     # Ignore flake8-errmsg
+    "TRY003", # Ignore long messages in exception constructors
     "FBT001", # Ignore boolean-type-hint-positional-argument
     "FBT002", # Ignore boolean-default-value-positional-argument
     "PTH123", # Ignore builtin-open

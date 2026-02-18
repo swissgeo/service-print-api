@@ -6,7 +6,7 @@ SERVICE_NAME := service-print-api
 
 CURRENT_DIR := $(shell pwd)
 
-HTTP_PORT := 3000
+HTTP_PORT ?= 3000
 
 # Docker metadata
 GIT_HASH := $(shell git rev-parse HEAD)
@@ -36,6 +36,9 @@ AWS_DEFAULT_REGION = eu-central-1
 
 # Env file for dockerrun, defaults to .env.local / .env
 ENV_FILE ?= $(if $(wildcard .env.local),.env.local,.env)
+# include the env file
+-include $(ENV_FILE)
+
 # export the env file so that uv picks it up in all recipes below
 export UV_ENV_FILE := $(ENV_FILE)
 
@@ -87,13 +90,12 @@ ci-check-format: format ## Check the format (CI)
 
 
 .PHONY: serve
-serve: ## Serve the application locally
-	#ENV_FILE=.env LOGS_DIR=$(LOGS_DIR) FLASK_APP=service_launcher FLASK_DEBUG=1
+serve: start-localstack ## Serve the application locally
 	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 
 .PHONY: gunicornserve
-gunicornserve: ## Serve the application locally with gunicorn
+gunicornserve: start-localstack ## Serve the application locally with gunicorn
 	ENV_FILE=.env $(UV_RUN) gunicorn --bind 0.0.0.0:$(HTTP_PORT) --reload app.wsgi:app
 
 
@@ -119,7 +121,7 @@ dockerpush: dockerbuild ## Push to the docker registry
 
 
 .PHONY: dockerrun
-dockerrun: dockerbuild ## Run the locally built docker image
+dockerrun: start-localstack dockerbuild ## Run the locally built docker image
 	docker run \
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
@@ -130,7 +132,7 @@ dockerrun: dockerbuild ## Run the locally built docker image
 
 .PHONY: lint
 lint: ## Run the linter on the code base and type-checker ty
-	#$(RUFF) check
+	$(RUFF) check
 	$(TY) check
 
 

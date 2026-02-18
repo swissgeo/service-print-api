@@ -1,23 +1,25 @@
 from __future__ import annotations
 
+import datetime
+import hashlib
+import json
 import logging
 import logging.config
 import os
 import re
-from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urlparse
 
 import yaml
 
-from flask import Response, abort, jsonify, make_response, request
+from flask import Response, jsonify, make_response
 
-if TYPE_CHECKING:
-    from flask import Flask
-    from werkzeug.routing import Rule
-
-from app.config.settings import ALLOWED_DOMAINS_PATTERN
+from app.config.settings import (
+    ALLOWED_DOMAINS_PATTERN,
+    MAX_PAYLOAD_SIZE_BYTES,
+    TTL_DYNAMODB_ITEM_HH,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,35 +56,6 @@ def init_logging() -> None:
     logging.config.dictConfig(config)
 
 
-def get_registered_method(app: Flask, url_rule: Rule | None) -> set[str]:
-    """Returns the list of registered method for the given endpoint"""
-
-    # The list of registered method is taken from the werkzeug.routing.Rule. A Rule object
-    # has a methods property with the list of allowed method on an endpoint. If this property is
-    # missing then all methods are allowed.
-    # See https://werkzeug.palletsprojects.com/en/2.0.x/routing/#werkzeug.routing.Rule
-    all_methods = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE"]
-    return set(
-        chain.from_iterable(
-            [
-                r.methods if r.methods else all_methods
-                for r in app.url_map.iter_rules()
-                if r.rule == str(url_rule)
-            ]
-        )
-    )
-
-
-def get_redirect_param(ignore_errors: bool = False) -> bool:
-    try:
-        redirect = strtobool(request.args.get("redirect", "true"))
-    except ValueError as error:
-        redirect = False
-        if not ignore_errors:
-            abort(400, f'Invalid "redirect" arg: {error}')
-    return redirect
-
-
 def make_error_msg(code: int | None, msg: str | None) -> Response:
     return make_response(
         jsonify({"success": False, "error": {"code": code, "message": msg}}),
@@ -96,3 +69,121 @@ def is_domain_allowed(url: str) -> bool:
     if domain:
         return re.fullmatch(ALLOWED_DOMAINS_PATTERN, domain) is not None
     return False
+
+
+def dict_to_sha256_hash(data: dict[str, object]) -> str:
+    """
+    Converts a dictionary into a consistent SHA-256 hash.
+
+    To ensure consistency (e.g., for dicts with different key orders but
+    identical content), the function serializes the dict into a canonical
+    JSON form (sorted keys, no whitespace) before hashing.
+
+    Args:
+        data: The input dictionary.
+
+    Returns:
+        A string representing the SHA-256 hash in hexadecimal format.
+    """
+    canonical_json_string = json.dumps(data, sort_keys=True, separators=(",", ":"))
+    encoded_json = canonical_json_string.encode("utf-8")
+    sha256_hash = hashlib.sha256(encoded_json)
+    return sha256_hash.hexdigest()
+
+
+def get_iso_8601_timestamp() -> str:
+    """
+    Generates the current UTC timestamp as a string in ISO 8601 format.
+
+    The ISO 8601 format includes date, time, and timezone information,
+    e.g., "YYYY-MM-DDTHH:MM:SS.ffffff+00:00" for UTC.
+
+    Returns:
+        A string representing the current UTC timestamp in ISO 8601 format.
+    """
+    # Get the current UTC time
+    now_utc = datetime.datetime.now(datetime.UTC)
+
+    # Format it into ISO 8601 string.
+    # .isoformat() automatically handles the 'T' separator and timezone offset.
+    # For UTC, it will append '+00:00'.
+    return now_utc.isoformat()
+
+
+def get_ttl_timestamp() -> int:
+    """Generates a Unix epoch timestamp for DynamoDB TTL.
+
+    The TTL is calculated as the current UTC time plus
+    TTL_DYNAMODB_ITEM_HH.
+
+    Returns:
+        An integer representing the expiration time as a Unix epoch timestamp.
+    """
+    now_utc = datetime.datetime.now(datetime.UTC)
+    ttl = now_utc + datetime.timedelta(hours=TTL_DYNAMODB_ITEM_HH)
+    return int(ttl.timestamp())
+
+
+def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
+    """
+    Calculates the difference in hours between two ISO 8601 formatted date strings.
+
+    Args:
+        start_date_str: The starting date and time string in ISO 8601 format
+        (e.g., '2023-10-27T10:00:00+00:00').
+        end_date_str: The ending date and time string in ISO 8601 format
+        (e.g., '2023-10-28T12:30:00+00:00').
+
+    Returns:
+        The difference in hours as a float.
+
+    Raises:
+        ValueError: If the date strings are not in valid ISO 8601 format.
+    """
+    try:
+        # Parse the ISO 8601 strings into datetime objects.
+        # .fromisoformat() handles various formats, including those with and without timezones.
+        start_date = datetime.datetime.fromisoformat(start_date_str)
+        end_date = datetime.datetime.fromisoformat(end_date_str)
+
+        # Calculate the difference between the two datetime objects.
+        # This results in a timedelta object.
+        time_difference = end_date - start_date
+
+        # Get the total number of seconds from the timedelta object.
+        total_seconds = time_difference.total_seconds()
+
+        # Convert the total seconds to hours and return the result.
+        return total_seconds / 3600
+
+    except ValueError as e:
+        logger.exception("Invalid date format. Please use ISO 8601")
+        raise ValueError("Invalid date format. Please use ISO 8601") from e
+
+
+def validate_payload(payload: Any) -> None:
+    """Validate the incoming request payload.
+
+    Raises:
+        ValueError: If the payload is None or exceeds MAX_PAYLOAD_SIZE_BYTES.
+    """
+    if payload is None:
+        raise ValueError("Payload must not be None")
+    payload_size = len(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    if payload_size > MAX_PAYLOAD_SIZE_BYTES:
+        raise ValueError(
+            f"Payload size {payload_size} bytes exceeds limit of {MAX_PAYLOAD_SIZE_BYTES} bytes"
+        )
+
+
+def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
+    """Build the standard job response dict from a DynamoDB item."""
+    return {
+        "status": item["status"],
+        "reportUrl": f"/jobs/{item['job_id']}",
+        "created": item["created_timestamp_iso_8601"],
+        "started": item.get("started_timestamp_iso_8601") or None,
+        "finished": item.get("finished_timestamp_iso_8601") or None,
+        "pdfUrl": item.get("pdf_url") or None,
+        "message": item.get("message") or None,
+    }
