@@ -164,6 +164,8 @@ def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
         "status": item["status"],
         "reportUrl": f"/jobs/{item['job_id']}",
         "created": item["created_timestamp_iso_8601"],
-        "started": item["started_timestamp_iso_8601"],
-        "finished": item["finished_timestamp_iso_8601"],
+        "started": item.get("started_timestamp_iso_8601") or None,
+        "finished": item.get("finished_timestamp_iso_8601") or None,
+        "pdfUrl": item.get("pdf_url") or None,
+        "message": item.get("message") or None,
     }

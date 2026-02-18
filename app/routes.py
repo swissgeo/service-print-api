@@ -58,24 +58,20 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     item = {
         "job_id": job_id,
         "created_timestamp_iso_8601": get_iso_8601_timestamp(),
-        "started_timestamp_iso_8601": "",
-        "finished_timestamp_iso_8601": "",
         "payload": payload,
         "status": "open",
-        "pdf_url": "",
-        "message": "",
     }
-    try:
-        send_to_queue(item)
-    except ClientError:
-        logger.exception("Error sending item to SQS queue")
-        return ({"error": "Error sending print job to queue"}, HTTPStatus.INTERNAL_SERVER_ERROR)
-
     try:
         insert_dynamodb(item)
     except ClientError:
         logger.exception("Error inserting item into DynamoDB")
         return ({"error": "Error storing print job in database"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    try:
+        send_to_queue(item)
+    except ClientError:
+        logger.exception("Error sending item to SQS queue")
+        return ({"error": "Error sending print job to queue"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return (build_job_response(item), HTTPStatus.ACCEPTED)
 
