@@ -23,8 +23,8 @@ AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 CACHE_CONTROL = os.getenv("CACHE_CONTROL", "public, max-age=31536000")
 CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=3600")
 
-DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-api"))
-SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-queue"))
+DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-jobs-local"))
+SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-jobs-queue-local"))
 
 EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPIRATION_TIME_HH_PRINT_DOC", "24"))
 TTL_DYNAMODB_ITEM_HH: int = int(os.environ.get("TTL_DYNAMODB_ITEM_HH", "48"))

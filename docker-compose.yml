@@ -21,7 +21,7 @@ services:
       - dynamodb
       - create-table
       - --table-name
-      - service-print-api
+      - ${DYNAMODB_TABLE_NAME}
       - --attribute-definitions
       - AttributeName=job_id,AttributeType=S
       - --key-schema
@@ -46,7 +46,7 @@ services:
       - sqs
       - create-queue
       - --queue-name
-      - service-print-queue
+      - ${SQS_QUEUE_NAME}
       - --endpoint-url
       - http://localstack:4566
     depends_on:
