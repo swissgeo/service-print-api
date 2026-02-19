@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 import hashlib
-import json
 from datetime import UTC, datetime
 from unittest.mock import patch
 
@@ -59,8 +56,7 @@ class TestDictToSha256Hash:
 
     def test_matches_manual_computation(self):
         data = {"key": "value"}
-        canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
-        expected = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        expected = "e43abcf3375244839c012f9633f95862d232a95b00d5bc7348b3098b9fed7f32"
         assert dict_to_sha256_hash(data) == expected
 
     def test_empty_dict(self):
