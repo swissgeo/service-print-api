@@ -63,7 +63,8 @@ if __name__ == "__main__":
     port = os.getenv("HTTP_PORT", "8080")
     options: dict[str, Any] = {
         "bind": f"0.0.0.0:{port}",
-        "workers": 2,
+        "worker_class": "gevent",
+        "workers": 2,  # scaling horizontally is left to Kubernetes
         "timeout": 60,
         "logconfig_dict": get_logging_cfg(),
         "post_fork": post_fork,

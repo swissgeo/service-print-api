@@ -1,19 +1,24 @@
 from os import getenv
 from typing import TYPE_CHECKING
 
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-from app.helpers.utils import strtobool
-
 if TYPE_CHECKING:
     from flask import Flask
+
+
+def strtobool(value: str) -> bool:
+    """Convert a string representation of truth to True or False.
+
+    True values: 'y', 'yes', 'true', 'on', '1'.
+    False values: 'n', 'no', 'false', 'off', '0', ''.
+
+    Raises ValueError if value is anything else.
+    """
+    value = value.lower().strip()
+    if value in ("true", "1", "yes", "y", "on"):
+        return True
+    if value in ("false", "0", "no", "n", "off", ""):
+        return False
+    raise ValueError(f"Cannot convert '{value}' to boolean")
 
 
 def initialize() -> None:
@@ -27,8 +32,12 @@ def initialize() -> None:
     """
     if not strtobool(getenv("OTEL_SDK_DISABLED", "false")):
         if strtobool(getenv("OTEL_ENABLE_LOGGING", "false")):
+            from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
             LoggingInstrumentor().instrument()
         if strtobool(getenv("OTEL_ENABLE_BOTOCORE", "false")):
+            from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
+
             BotocoreInstrumentor().instrument()
 
 
@@ -42,6 +51,8 @@ def initialize_flask(app: Flask) -> None:
     if not strtobool(getenv("OTEL_SDK_DISABLED", "false")) and strtobool(
         getenv("OTEL_ENABLE_FLASK", "false")
     ):
+        from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
         FlaskInstrumentor().instrument_app(app)
 
 
@@ -56,6 +67,14 @@ def setup_trace_provider() -> None:
     - OTEL_EXPORTER_OTLP_INSECURE: use insecure (plaintext) connection when true
     """
     if not strtobool(getenv("OTEL_SDK_DISABLED", "false")):
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
         span_processor = BatchSpanProcessor(
             OTLPSpanExporter(
                 endpoint=getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),

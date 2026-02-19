@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+from app.helpers.otel import strtobool
 from app.helpers.utils import (
     build_job_response,
     dict_to_sha256_hash,
@@ -11,7 +12,6 @@ from app.helpers.utils import (
     get_iso_8601_timestamp,
     get_ttl_timestamp,
     is_domain_allowed,
-    strtobool,
     validate_payload,
 )
 
