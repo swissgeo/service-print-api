@@ -4,14 +4,17 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_sqs import SQSClient
 
 from app.config.settings import (
+    AWS_CONNECT_TIMEOUT,
     AWS_DEFAULT_REGION,
     AWS_LOCAL,
+    AWS_READ_TIMEOUT,
     LOCALSTACK_PORT,
     SQS_QUEUE_NAME,
 )
@@ -35,6 +38,10 @@ def get_sqs_client() -> SQSClient:
         ClientError: If there is an issue connecting to the SQS endpoint,
                      such as network problems or invalid credentials.
     """
+    boto_config = Config(
+        connect_timeout=AWS_CONNECT_TIMEOUT,
+        read_timeout=AWS_READ_TIMEOUT,
+    )
     try:
         if AWS_LOCAL:
             logger.info("Connecting to locally running SQS")
@@ -42,9 +49,10 @@ def get_sqs_client() -> SQSClient:
                 "sqs",
                 endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
                 region_name=AWS_DEFAULT_REGION,
+                config=boto_config,
             )
         else:
-            sqs = boto3.client("sqs")
+            sqs = boto3.client("sqs", config=boto_config)
     except ClientError:
         logger.exception("Error connecting to SQS")
         raise
