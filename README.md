@@ -16,6 +16,8 @@
   - [Setup](#setup)
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
+  - [OpenTelemetry (tracing)](#opentelemetry-tracing)
+    - [Local tracing setup](#local-tracing-setup)
 
 
 
@@ -100,8 +102,39 @@ The service is configured by Environment Variable:
 
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
-| DYNAMODB_TABLE_NAME | `service-print-headless` | The name of the dynamodb table with the info about pdf generation|
-| SQS_QUEUE_NAME | `service-print-queue` | The name of the sqs queue |
-| EXPIRATION_TIME_HH_PRINT_DOC | `24` | If a pdf already has been generated, the expiration time in hours before generating a new one |
-| AWS_LOCAL | - | Used for local development. Can be `local` for completely local development, `aws_poc` to interact with the aws poc accunt (will be deleted once) or nothing for a setup in a k8s environment. |
+| HTTP_PORT | `3000` | Port the HTTP server listens on |
+| AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
+| LOCALSTACK_PORT | `4566` | Port of the LocalStack instance used in local development |
+| ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
+| CACHE_CONTROL | `public, max-age=31536000` | `Cache-Control` header value for successful responses |
+| CACHE_CONTROL_4XX | `public, max-age=3600` | `Cache-Control` header value for 4xx error responses |
+| DYNAMODB_TABLE_NAME | `service-print-jobs-local` | The name of the DynamoDB table storing print job info |
+| SQS_QUEUE_NAME | `service-print-jobs-queue-local` | The name of the SQS queue |
+| EXPIRATION_TIME_HH_PRINT_DOC | `24` | Expiration time in hours before re-generating an already existing PDF |
+| TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
+| MAX_PAYLOAD_SIZE_BYTES | `102400` | Maximum allowed request payload size in bytes (default: 100 KB) |
+
+### OpenTelemetry (tracing)
+
+| Env | Default | Description |
+| --- | ------- | ----------- |
+| OTEL_SDK_DISABLED | `false` | Set to `true` to disable all OTEL instrumentation |
+| OTEL_ENABLE_FLASK | `false` | Set to `true` to enable automatic tracing of Flask HTTP requests |
+| OTEL_ENABLE_LOGGING | `false` | Set to `true` to inject `otelTraceID` and `otelSpanID` into log records |
+| OTEL_ENABLE_BOTOCORE | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
+| OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
+| OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
+| OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
+| OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
+| OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
+
+#### Local tracing setup
+
+To test tracing locally, start the OTEL collector and Zipkin:
+
+```bash
+docker compose -f docker-compose-otel.yml up -d
+```
+
+Then start the app with `make gunicornserve`. Traces are visible at **<http://localhost:9411>** (Zipkin UI).
 
