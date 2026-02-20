@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 if TYPE_CHECKING:
     from mypy_boto3_sqs import SQSClient
@@ -81,6 +81,12 @@ def send_to_queue(message: dict[str, Any]) -> None:
             MessageBody=json.dumps(message),
         )
         logger.info("Message sent to SQS queue %s", SQS_QUEUE_NAME)
+    except ConnectTimeoutError:
+        logger.exception("Connection timeout sending message to SQS queue %s", SQS_QUEUE_NAME)
+        raise
+    except ReadTimeoutError:
+        logger.exception("Read timeout sending message to SQS queue %s", SQS_QUEUE_NAME)
+        raise
     except ClientError:
         logger.exception("Error sending message to SQS queue %s", SQS_QUEUE_NAME)
         raise

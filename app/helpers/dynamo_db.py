@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb import DynamoDBServiceResource
@@ -101,6 +101,12 @@ def insert_dynamodb(item: dict[str, Any]) -> None:
         logger.info("Put to dynamodb")
         dynamodb_table.put_item(Item=item)
         logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
+    except ConnectTimeoutError:
+        logger.exception("Connection timeout inserting job %s into DynamoDB", item["job_id"])
+        raise
+    except ReadTimeoutError:
+        logger.exception("Read timeout inserting job %s into DynamoDB", item["job_id"])
+        raise
     except ClientError:
         logger.exception("Error updating dynamodb")
         raise
@@ -122,6 +128,12 @@ def get_print_job(job_id: str | None) -> dict[str, Any] | None:
     dynamodb_table = get_dynamodb_table()
     try:
         print_queued = dynamodb_table.get_item(Key={"job_id": job_id})
+    except ConnectTimeoutError:
+        logger.exception("Connection timeout looking up print job %s", job_id)
+        raise
+    except ReadTimeoutError:
+        logger.exception("Read timeout looking up print job %s", job_id)
+        raise
     except ClientError:
         logger.exception("Error looking up print job %s", job_id)
         raise
