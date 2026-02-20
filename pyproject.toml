@@ -13,8 +13,14 @@ dependencies = [
     "pyyaml~=6.0",
     "whitenoise~=6.11",
     "boto3~=1.42",
-    "python-dotenv>=1.2",
-    "types-pyyaml>=6.0",
+    "python-dotenv~=1.2",
+    "types-pyyaml~=6.0",
+    # OpenTelemetry packages
+    "opentelemetry-sdk~=1.39",
+    "opentelemetry-exporter-otlp~=1.39",
+    "opentelemetry-instrumentation-flask==0.60b1",
+    "opentelemetry-instrumentation-logging==0.60b1",
+    "opentelemetry-instrumentation-botocore==0.60b1",
 ]
 
 [dependency-groups]
@@ -83,6 +89,10 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 #------------------------------------------------------------------------------
 # ruff ignore per files
 [tool.ruff.lint.per-file-ignores]
+
+"app/helpers/otel.py" = [
+    "PLC0415",  # Lazy imports are intentional (gevent/OTEL bootstrapping order)
+]
 
 "app/tests/**" = [
     "S101",    # Ignore usage of assert statements in tests

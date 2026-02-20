@@ -96,7 +96,7 @@ serve: start-localstack ## Serve the application locally
 
 .PHONY: gunicornserve
 gunicornserve: start-localstack ## Serve the application locally with gunicorn
-	ENV_FILE=.env $(UV_RUN) gunicorn --bind 0.0.0.0:$(HTTP_PORT) --reload app.wsgi:app
+	ENV_FILE=.env $(UV_RUN) python -m app.wsgi
 
 
 .PHONY: dockerlogin

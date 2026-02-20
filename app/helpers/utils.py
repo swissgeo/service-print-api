@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import hashlib
 import json
@@ -22,17 +20,6 @@ from app.config.settings import (
 )
 
 logger = logging.getLogger(__name__)
-
-INVALID_BOOLEAN_ERROR = "Cannot convert '{value}' to boolean"
-
-
-def strtobool(value: str) -> bool:
-    value = value.lower().strip()
-    if value in ("true", "1", "yes", "y", "on"):
-        return True
-    if value in ("false", "0", "no", "n", "off", ""):
-        return False
-    raise ValueError(INVALID_BOOLEAN_ERROR.format(value=value))
 
 
 def get_logging_cfg() -> Any:

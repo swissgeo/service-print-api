@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
-from app import routes  # noqa: F401 - registers routes with app
-from app.app import app
-
 if TYPE_CHECKING:
     from flask import Flask
 
 
 def create_app() -> Flask:
     """Application factory for Flask."""
+    from app import routes  # noqa: F401, PLC0415 - lazy import: must run after gevent monkey-patch
+    from app.app import app  # noqa: PLC0415
+
     return app

@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import Any
 
 from botocore.exceptions import ClientError
+from opentelemetry import trace
 
 from flask import Response, jsonify, make_response, request
 
@@ -21,9 +22,11 @@ from app.helpers.utils import (
 )
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 @app.route("/jobs", methods=["POST"])
+@tracer.start_as_current_span("routes.start_print")
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
     try:
@@ -67,7 +70,10 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
         insert_dynamodb(item)
     except ClientError:
         logger.exception("Error inserting item into DynamoDB")
-        return ({"error": "Error storing print job in database"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        return (
+            {"error": "Error storing print job in database"},
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
 
     try:
         send_to_queue(item)
@@ -87,6 +93,7 @@ def print_list() -> Response:
 
 
 @app.route("/jobs/<job_id>", methods=["GET"])
+@tracer.start_as_current_span("routes.print_status")
 def print_status(job_id: str) -> Response:
     try:
         item = get_print_job(job_id)
