@@ -113,6 +113,8 @@ The service is configured by Environment Variable:
 | EXPIRATION_TIME_HH_PRINT_DOC | `24` | Expiration time in hours before re-generating an already existing PDF |
 | TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
 | MAX_PAYLOAD_SIZE_BYTES | `102400` | Maximum allowed request payload size in bytes (default: 100 KB) |
+| AWS_CONNECT_TIMEOUT | `5` | Timeout in seconds for establishing a connection to DynamoDB/SQS |
+| AWS_READ_TIMEOUT | `30` | Timeout in seconds for reading a response from DynamoDB/SQS |
 
 ### OpenTelemetry (tracing)
 

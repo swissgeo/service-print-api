@@ -3,15 +3,18 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any, cast
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.config import Config
+from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb import DynamoDBServiceResource
     from mypy_boto3_dynamodb.service_resource import Table
 
 from app.config.settings import (
+    AWS_CONNECT_TIMEOUT,
     AWS_DEFAULT_REGION,
     AWS_LOCAL,
+    AWS_READ_TIMEOUT,
     DYNAMODB_TABLE_NAME,
     LOCALSTACK_PORT,
 )
@@ -36,6 +39,10 @@ def get_dynamodb() -> DynamoDBServiceResource:
                      such as network problems or invalid credentials.
     """
     # init dynamodb
+    boto_config = Config(
+        connect_timeout=AWS_CONNECT_TIMEOUT,
+        read_timeout=AWS_READ_TIMEOUT,
+    )
     try:
         # condition if working locally for development
         if AWS_LOCAL:
@@ -46,10 +53,13 @@ def get_dynamodb() -> DynamoDBServiceResource:
                     "dynamodb",
                     endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
                     region_name=AWS_DEFAULT_REGION,
+                    config=boto_config,
                 ),
             )
         else:
-            dynamodb = cast("DynamoDBServiceResource", boto3.resource("dynamodb"))
+            dynamodb = cast(
+                "DynamoDBServiceResource", boto3.resource("dynamodb", config=boto_config)
+            )
     except ClientError:
         logger.exception("Error connecting dynamodb")
         raise
@@ -91,6 +101,12 @@ def insert_dynamodb(item: dict[str, Any]) -> None:
         logger.info("Put to dynamodb")
         dynamodb_table.put_item(Item=item)
         logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
+    except ConnectTimeoutError:
+        logger.exception("Connection timeout inserting job %s into DynamoDB", item["job_id"])
+        raise
+    except ReadTimeoutError:
+        logger.exception("Read timeout inserting job %s into DynamoDB", item["job_id"])
+        raise
     except ClientError:
         logger.exception("Error updating dynamodb")
         raise
@@ -112,6 +128,12 @@ def get_print_job(job_id: str | None) -> dict[str, Any] | None:
     dynamodb_table = get_dynamodb_table()
     try:
         print_queued = dynamodb_table.get_item(Key={"job_id": job_id})
+    except ConnectTimeoutError:
+        logger.exception("Connection timeout looking up print job %s", job_id)
+        raise
+    except ReadTimeoutError:
+        logger.exception("Read timeout looking up print job %s", job_id)
+        raise
     except ClientError:
         logger.exception("Error looking up print job %s", job_id)
         raise
