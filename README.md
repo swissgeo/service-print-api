@@ -104,7 +104,7 @@ The service is configured by Environment Variable:
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
-| LOCALSTACK_PORT | `4566` | Port of the LocalStack instance used in local development |
+| LOCALSTACK_ENDPOINT | `http://localhost:4566` | Endpoint URL of the LocalStack instance used in local development |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
 | CACHE_CONTROL | `public, max-age=31536000` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=3600` | `Cache-Control` header value for 4xx error responses |
