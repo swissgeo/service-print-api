@@ -5,10 +5,10 @@ services:
     ports:
       - "${LOCALSTACK_PORT}:4566"
     environment:
-      - SERVICES=dynamodb,sqs
+      - SERVICES=dynamodb,s3,sqs
       - DEBUG=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test: ["CMD", "curl", "-f", "http://localstack:${LOCALSTACK_PORT}/_localstack/health"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,14 +29,14 @@ services:
       - --provisioned-throughput
       - ReadCapacityUnits=2,WriteCapacityUnits=1
       - --endpoint-url
-      - http://localstack:4566
+      - http://localstack:${LOCALSTACK_PORT}
     depends_on:
       localstack:
         condition: service_healthy
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - AWS_REGION=${AWS_REGION}
     networks:
       - network_local
 
@@ -48,14 +48,56 @@ services:
       - --queue-name
       - ${SQS_QUEUE_NAME}
       - --endpoint-url
-      - http://localstack:4566
+      - http://localstack:${LOCALSTACK_PORT}
     depends_on:
       localstack:
         condition: service_healthy
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - AWS_REGION=${AWS_REGION}
+    networks:
+      - network_local
+
+  init-s3:
+    image: amazon/aws-cli
+    command:
+      - s3api
+      - create-bucket
+      - --bucket
+      - ${S3_BUCKET_NAME}
+      - --endpoint-url
+      - http://localstack:${LOCALSTACK_PORT}
+      - --create-bucket-configuration
+      - LocationConstraint=${AWS_REGION}
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+    networks:
+      - network_local
+
+  init-s3-renderer:
+    image: amazon/aws-cli
+    command:
+      - s3api
+      - create-bucket
+      - --bucket
+      - ${S3_BUCKET_NAME}
+      - --endpoint-url
+      - http://localstack:${LOCALSTACK_PORT}
+      - --create-bucket-configuration
+      - LocationConstraint=${AWS_REGION}
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     networks:
       - network_local
 

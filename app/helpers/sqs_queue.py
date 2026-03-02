@@ -12,10 +12,10 @@ if TYPE_CHECKING:
 
 from app.config.settings import (
     AWS_CONNECT_TIMEOUT,
-    AWS_DEFAULT_REGION,
     AWS_LOCAL,
     AWS_READ_TIMEOUT,
-    LOCALSTACK_PORT,
+    AWS_REGION,
+    LOCALSTACK_ENDPOINT,
     SQS_QUEUE_NAME,
 )
 
@@ -47,8 +47,8 @@ def get_sqs_client() -> SQSClient:
             logger.info("Connecting to locally running SQS")
             sqs = boto3.client(
                 "sqs",
-                endpoint_url=f"http://localhost:{LOCALSTACK_PORT}",
-                region_name=AWS_DEFAULT_REGION,
+                endpoint_url=LOCALSTACK_ENDPOINT,
+                region_name=AWS_REGION,
                 config=boto_config,
             )
         else:

@@ -32,7 +32,7 @@ DOCKER_REGISTRY = 074597099015.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_IMG_LOCAL_TAG := $(DOCKER_REGISTRY)/swissgeo/$(SERVICE_NAME):local-$(USER)-$(GIT_HASH_SHORT)
 
 # AWS variables
-AWS_DEFAULT_REGION = eu-central-1
+AWS_REGION = eu-central-1
 
 # Env file for dockerrun, defaults to .env.local / .env
 ENV_FILE ?= $(if $(wildcard .env.local),.env.local,.env)
@@ -68,9 +68,9 @@ ci: .env
 .PHONY: setup
 setup: .env $(LOGS_DIR) ## Create virtualenv with all packages for development
 	uv sync
-	# Start a new zsh shell with the virtualenv activated and the .env file loaded into the environment
+	# Start a new shell with the virtualenv activated and the .env file loaded into the environment
 	# variables. The later is required for django which reads the settings from the environment variables
-	uv run zsh
+	uv run $$SHELL
 
 
 .PHONY: format
@@ -101,7 +101,7 @@ gunicornserve: start-localstack ## Serve the application locally with gunicorn
 
 .PHONY: dockerlogin
 dockerlogin: ## Login to the AWS Docker Registry (ECR)
-	aws --profile swisstopo-swissgeo-builder ecr get-login-password --region $(AWS_DEFAULT_REGION) | docker login --username AWS --password-stdin $(DOCKER_REGISTRY)
+	aws --profile swisstopo-swissgeo-builder ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(DOCKER_REGISTRY)
 
 
 .PHONY: dockerbuild
