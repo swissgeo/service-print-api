@@ -65,7 +65,7 @@ To create and activate a virtual Python environment with all dependencies instal
 make setup
 ```
 
-To start the local aws stack for development (dynamodb and sqs):
+To start the local aws stack for development (DynamoDB, SQS main queue + dead-letter queue, S3):
 
 ```bash
 make start-localstack
@@ -110,6 +110,9 @@ The service is configured by Environment Variable:
 | CACHE_CONTROL_4XX | `public, max-age=3600` | `Cache-Control` header value for 4xx error responses |
 | DYNAMODB_TABLE_NAME | `service-print-jobs-local` | The name of the DynamoDB table storing print job info |
 | SQS_QUEUE_NAME | `service-print-jobs-queue-local` | The name of the SQS queue |
+| SQS_DL_QUEUE_NAME | `service-print-jobs-dlq-local` | The name of the SQS dead-letter queue |
+| SQS_MAX_RECEIVE_COUNT | `3` | Number of times a message can be received before SQS routes it to the DLQ automatically |
+| SQS_VISIBILITY_TIMEOUT | `60` | How long (in seconds) a received message is hidden from other consumers; after expiry SQS redelivers it (or routes to DLQ if `maxReceiveCount` is reached) |
 | EXPIRATION_TIME_HH_PRINT_DOC | `24` | Expiration time in hours before re-generating an already existing PDF |
 | TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
 | MAX_PAYLOAD_SIZE_BYTES | `102400` | Maximum allowed request payload size in bytes (default: 100 KB) |
