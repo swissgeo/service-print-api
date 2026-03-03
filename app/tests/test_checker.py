@@ -1,5 +1,5 @@
 def test_checker(client):
-    response = client.get("/checker")
+    response = client.get("/api/print/checker")
     assert response.status_code == 200
 
 

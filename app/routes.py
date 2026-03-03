@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 
-@app.route("/jobs", methods=["POST"])
+@app.route("/api/print/jobs", methods=["POST"])
 @tracer.start_as_current_span("routes.start_print")
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
@@ -84,7 +84,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     return (build_job_response(item), HTTPStatus.ACCEPTED)
 
 
-@app.route("/jobs", methods=["GET"])
+@app.route("/api/print/jobs", methods=["GET"])
 def print_list() -> Response:
     return make_response(
         jsonify({"error": "Print job listing has not been implemented"}),
@@ -92,7 +92,7 @@ def print_list() -> Response:
     )
 
 
-@app.route("/jobs/<job_id>", methods=["GET"])
+@app.route("/api/print/jobs/<job_id>", methods=["GET"])
 @tracer.start_as_current_span("routes.print_status")
 def print_status(job_id: str) -> Response:
     try:
@@ -110,7 +110,7 @@ def print_status(job_id: str) -> Response:
     return make_response(jsonify(build_job_response(item)), HTTPStatus.OK)
 
 
-@app.route("/checker", methods=["GET"])
+@app.route("/api/print/checker", methods=["GET"])
 def checker() -> Response:
     return make_response(
         jsonify({"success": True, "message": "OK", "version": APP_VERSION}), HTTPStatus.OK
