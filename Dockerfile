@@ -97,7 +97,7 @@ USER ${USER}
 
 EXPOSE ${HTTP_PORT}
 # entrypoint is the manage command
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python", "-m", "app.wsgi"]
 
 
 ###########################################################
@@ -134,4 +134,4 @@ USER ${USER}
 
 EXPOSE ${HTTP_PORT}
 # entrypoint is the manage command
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python", "-m", "app.wsgi"]

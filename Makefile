@@ -127,7 +127,7 @@ dockerrun: start-localstack dockerbuild ## Run the locally built docker image
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
 		--net=host \
-		$(DOCKER_IMG_LOCAL_TAG) -m app.wsgi
+		$(DOCKER_IMG_LOCAL_TAG)
 
 
 .PHONY: lint
