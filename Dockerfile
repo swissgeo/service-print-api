@@ -96,8 +96,9 @@ WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
 EXPOSE ${HTTP_PORT}
-# entrypoint is the manage command
+
 ENTRYPOINT ["python"]
+CMD ["-m", "app.wsgi"]
 
 
 ###########################################################
@@ -133,5 +134,6 @@ WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
 EXPOSE ${HTTP_PORT}
-# entrypoint is the manage command
+
 ENTRYPOINT ["python"]
+CMD ["-m", "app.wsgi"]
