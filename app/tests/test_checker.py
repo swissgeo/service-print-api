@@ -1,5 +1,8 @@
+from app.config.settings import API_PATH_PREFIX
+
+
 def test_checker(client):
-    response = client.get("/api/print/checker")
+    response = client.get(f"{API_PATH_PREFIX}/checker")
     assert response.status_code == 200
 
 

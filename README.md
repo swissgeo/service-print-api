@@ -35,11 +35,13 @@ As soon as the print has been accomplished, the client recives a positive status
 
 Furthermore there exists the checker GET endpoint to test, if the server is up:
 
+The base path is configurable via the `API_PATH_PREFIX` environment variable (default: `/api/print`).
+
 | Path | Method | Argument | Response Type |
 |------|--------|----------|---------------|
-| /api/print/checker | GET | - | application/json |
-| /api/print/jobs | POST | json (f.ex. post_print.sh) | application/json |
-| /api/print/jobs/\<job_id\> | GET | job_id | application/json |
+| `$API_PATH_PREFIX`/checker | GET | - | application/json |
+| `$API_PATH_PREFIX`/jobs | POST | json (f.ex. post_print.sh) | application/json |
+| `$API_PATH_PREFIX`/jobs/\<job_id\> | GET | job_id | application/json |
 
 ## Versioning
 
@@ -103,6 +105,7 @@ The service is configured by Environment Variable:
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
+| API_PATH_PREFIX | `/api/print` | Base path prefix for all API routes |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
 | LOCALSTACK_ENDPOINT | `http://localhost:4566` | Endpoint URL of the LocalStack instance used in local development |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |

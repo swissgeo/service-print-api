@@ -8,7 +8,7 @@ from opentelemetry import trace
 from flask import Response, jsonify, make_response, request
 
 from app.app import app
-from app.config.settings import EXPIRATION_TIME_HH_PRINT_DOC
+from app.config.settings import API_PATH_PREFIX, EXPIRATION_TIME_HH_PRINT_DOC
 from app.config.version import APP_VERSION
 from app.helpers.dynamo_db import get_dynamodb_table, get_print_job, insert_dynamodb
 from app.helpers.sqs_queue import send_to_queue
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 
-@app.route("/api/print/jobs", methods=["POST"])
+@app.route(f"{API_PATH_PREFIX}/jobs", methods=["POST"])
 @tracer.start_as_current_span("routes.start_print")
 def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     payload = request.get_json()
@@ -84,7 +84,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
     return (build_job_response(item), HTTPStatus.ACCEPTED)
 
 
-@app.route("/api/print/jobs", methods=["GET"])
+@app.route(f"{API_PATH_PREFIX}/jobs", methods=["GET"])
 def print_list() -> Response:
     return make_response(
         jsonify({"error": "Print job listing has not been implemented"}),
@@ -92,7 +92,7 @@ def print_list() -> Response:
     )
 
 
-@app.route("/api/print/jobs/<job_id>", methods=["GET"])
+@app.route(f"{API_PATH_PREFIX}/jobs/<job_id>", methods=["GET"])
 @tracer.start_as_current_span("routes.print_status")
 def print_status(job_id: str) -> Response:
     try:
@@ -110,7 +110,7 @@ def print_status(job_id: str) -> Response:
     return make_response(jsonify(build_job_response(item)), HTTPStatus.OK)
 
 
-@app.route("/api/print/checker", methods=["GET"])
+@app.route(f"{API_PATH_PREFIX}/checker", methods=["GET"])
 def checker() -> Response:
     return make_response(
         jsonify({"success": True, "message": "OK", "version": APP_VERSION}), HTTPStatus.OK

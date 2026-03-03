@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 from botocore.exceptions import ClientError
 
+from app.config.settings import API_PATH_PREFIX
+
 
 class TestPrintStatus:
     @patch("app.routes.get_print_job")
@@ -17,7 +19,7 @@ class TestPrintStatus:
         }
 
         response = client.get(
-            "/api/print/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
+            f"{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
         )
 
         assert response.status_code == 200
@@ -25,7 +27,7 @@ class TestPrintStatus:
         assert data["status"] == "finished"
         assert (
             data["reportUrl"]
-            == "/api/print/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
+            == f"{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"  # noqa: E501
         )
         assert (
             data["pdfUrl"]
@@ -42,7 +44,7 @@ class TestPrintStatus:
         }
 
         response = client.get(
-            "/api/print/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
+            f"{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
         )
 
         assert response.status_code == 200
@@ -56,7 +58,7 @@ class TestPrintStatus:
     def test_job_not_found_returns_404(self, mock_get_job, client):
         mock_get_job.return_value = None
 
-        response = client.get("/api/print/jobs/nonexistent")
+        response = client.get(f"{API_PATH_PREFIX}/jobs/nonexistent")
 
         assert response.status_code == 404
         assert "warning" in response.get_json()
@@ -68,7 +70,7 @@ class TestPrintStatus:
         )
 
         response = client.get(
-            "/api/print/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
+            f"{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
         )
 
         assert response.status_code == 500
@@ -77,7 +79,7 @@ class TestPrintStatus:
 
 class TestPrintList:
     def test_returns_501(self, client):
-        response = client.get("/api/print/jobs")
+        response = client.get(f"{API_PATH_PREFIX}/jobs")
 
         assert response.status_code == 501
         assert "error" in response.get_json()

@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+from app.config.settings import API_PATH_PREFIX
 from app.helpers.otel import strtobool
 from app.helpers.utils import (
     build_job_response,
@@ -202,7 +203,7 @@ class TestBuildJobResponse:
         result = build_job_response(item)
         assert result == {
             "status": "open",
-            "reportUrl": "/api/print/jobs/8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",  # noqa: E501
+            "reportUrl": f"{API_PATH_PREFIX}/jobs/8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",  # noqa: E501
             "created": "2023-10-27T10:00:00+00:00",
             "started": None,
             "finished": None,
@@ -223,7 +224,7 @@ class TestBuildJobResponse:
         result = build_job_response(item)
         assert result == {
             "status": "done",
-            "reportUrl": "/api/print/jobs/8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",  # noqa: E501
+            "reportUrl": f"{API_PATH_PREFIX}/jobs/8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",  # noqa: E501
             "created": "2023-10-27T10:00:00+00:00",
             "started": "2023-10-27T10:01:00+00:00",
             "finished": "2023-10-27T10:05:00+00:00",
