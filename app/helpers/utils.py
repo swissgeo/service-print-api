@@ -167,7 +167,7 @@ def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
     """Build the standard job response dict from a DynamoDB item."""
     return {
         "status": item["status"],
-        "reportUrl": f"/jobs/{item['job_id']}",
+        "reportUrl": f"/api/print/jobs/{item['job_id']}",
         "created": item["created_timestamp_iso_8601"],
         "started": item.get("started_timestamp_iso_8601") or None,
         "finished": item.get("finished_timestamp_iso_8601") or None,

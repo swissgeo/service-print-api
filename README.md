@@ -37,9 +37,9 @@ Furthermore there exists the checker GET endpoint to test, if the server is up:
 
 | Path | Method | Argument | Response Type |
 |------|--------|----------|---------------|
-| /checker | GET | - | application/json |
-| /jobs | POST | json (f.ex. post_print.sh) | application/json |
-| /jobs/<job_id> | GET | job_id | application/json |
+| /api/print/checker | GET | - | application/json |
+| /api/print/jobs | POST | json (f.ex. post_print.sh) | application/json |
+| /api/print/jobs/\<job_id\> | GET | job_id | application/json |
 
 ## Versioning
 
