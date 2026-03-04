@@ -2,6 +2,8 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
+from app.config.settings import API_PATH_PREFIX
+
 
 class TestStartPrint:
     @patch("app.routes.send_to_queue")
@@ -13,7 +15,7 @@ class TestStartPrint:
         mock_get_table.return_value = mock_table
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -32,7 +34,9 @@ class TestStartPrint:
         mock_send.assert_called_once()
 
     def test_invalid_payload_returns_400(self, client):
-        response = client.post("/api/print/jobs", content_type="application/json", data="null")
+        response = client.post(
+            f"{API_PATH_PREFIX}/jobs", content_type="application/json", data="null"
+        )
 
         assert response.status_code == 400
         assert "error" in response.get_json()
@@ -59,7 +63,7 @@ class TestStartPrint:
         mock_get_table.return_value = mock_table
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -96,7 +100,7 @@ class TestStartPrint:
         mock_get_table.return_value = mock_table
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -125,7 +129,7 @@ class TestStartPrint:
         mock_get_table.return_value = mock_table
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -154,7 +158,7 @@ class TestStartPrint:
         )
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -181,7 +185,7 @@ class TestStartPrint:
         )
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",
@@ -208,7 +212,7 @@ class TestStartPrint:
         mock_get_table.return_value = mock_table
 
         response = client.post(
-            "/api/print/jobs",
+            f"{API_PATH_PREFIX}/jobs",
             json={
                 "format": "a4",
                 "orientation": "landscape",

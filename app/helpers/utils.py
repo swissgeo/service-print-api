@@ -15,6 +15,7 @@ from flask import Response, jsonify, make_response
 
 from app.config.settings import (
     ALLOWED_DOMAINS_PATTERN,
+    API_PATH_PREFIX,
     MAX_PAYLOAD_SIZE_BYTES,
     TTL_DYNAMODB_ITEM_HH,
 )
@@ -167,7 +168,7 @@ def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
     """Build the standard job response dict from a DynamoDB item."""
     return {
         "status": item["status"],
-        "reportUrl": f"/api/print/jobs/{item['job_id']}",
+        "reportUrl": f"{API_PATH_PREFIX}/jobs/{item['job_id']}",
         "created": item["created_timestamp_iso_8601"],
         "started": item.get("started_timestamp_iso_8601") or None,
         "finished": item.get("finished_timestamp_iso_8601") or None,
