@@ -87,3 +87,4 @@ services:
 networks:
   network_local:
     driver: bridge
+    name: shared_network_local
