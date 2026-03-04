@@ -20,8 +20,8 @@ ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
 LOCALSTACK_ENDPOINT = os.environ.get("LOCALSTACK_ENDPOINT", "http://localhost:4566")
 AWS_REGION = os.environ.get("AWS_REGION", "eu-central-1")
 
-CACHE_CONTROL = os.getenv("CACHE_CONTROL", "public, max-age=31536000")
-CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=3600")
+CACHE_CONTROL = os.getenv("CACHE_CONTROL", "no-store")
+CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=120")
 
 DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-jobs-local"))
 SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-jobs-queue-local"))

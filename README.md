@@ -109,8 +109,8 @@ The service is configured by Environment Variable:
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
 | LOCALSTACK_ENDPOINT | `http://localhost:4566` | Endpoint URL of the LocalStack instance used in local development |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
-| CACHE_CONTROL | `public, max-age=31536000` | `Cache-Control` header value for successful responses |
-| CACHE_CONTROL_4XX | `public, max-age=3600` | `Cache-Control` header value for 4xx error responses |
+| CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
+| CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
 | DYNAMODB_TABLE_NAME | `service-print-jobs-local` | The name of the DynamoDB table storing print job info |
 | SQS_QUEUE_NAME | `service-print-jobs-queue-local` | The name of the SQS queue |
 | SQS_DL_QUEUE_NAME | `service-print-jobs-dlq-local` | The name of the SQS dead-letter queue |
