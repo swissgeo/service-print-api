@@ -1,30 +1,51 @@
 <script lang="ts">
     import type { PrintJobStatus } from "./PrintJobStatus";
 
-    let { stage, statusUrl } = $props();
+    let { startPrintJobParams, stage, num } = $props();
 
     let status: PrintJobStatus | undefined = $state();
 
     let isLoading = $state(false);
 
+    let error: string | undefined = $state();
+
+    async function startPrintJob() {
+        const response = await fetch(`/${stage}/api/print/jobs`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(startPrintJobParams),
+        });
+        if (response.ok) {
+            status = await response.json();
+            setTimeout(fetchStatus, 1000);
+        } else {
+            error = `HTTP ${response.status}: ${await response.text()}`;
+            console.error(error);
+        }
+    }
+    startPrintJob();
+
     async function fetchStatus() {
         isLoading = true;
 
-        const response = await fetch(`/${stage}/${statusUrl}`);
+        const response = await fetch(`/${stage}${status?.reportUrl}`);
         status = await response.json();
 
-        if (status && status.status === "finished") {
-            clearInterval(intervalId);
+        if (status && status.status !== "finished") {
+            setTimeout(fetchStatus, 1000);
         }
         isLoading = false;
     }
-
-    fetchStatus();
-    const intervalId = setInterval(fetchStatus, 5000);
 </script>
 
 <section>
     <aside>
+        <h3>Print Job #{num}</h3>
+        {#if error}
+            <p class="error">{error}</p>
+        {/if}
         {#if status}
             <summary>
                 {#if status?.status == "started"}Started{/if}
@@ -54,3 +75,12 @@
         {/if}
     </aside>
 </section>
+
+<style>
+    .error {
+        color: red;
+        text-overflow: ellipsis;
+        max-height: 3em;
+        overflow: hidden;
+    }
+</style>

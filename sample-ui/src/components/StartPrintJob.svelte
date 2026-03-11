@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { PrintJobStatus as PrintJobStatusType } from "./PrintJobStatus";
-    import PrintJobStatus from "./PrintJobStatus.svelte";
+    import PrintJob from "./PrintJob.svelte";
 
     interface StartJobParams {
         format: "a4" | "a3" | "a2" | "a1" | "a0";
@@ -12,11 +11,11 @@
     }
     const TARGETS = [
         { alias: "dev", url: "https://www.dev.sgdi.tech/api/print/jobs" },
-        { alias: "localhost", url: "http://localhost:3000/api/print/jobs" },
+        { alias: "local", url: "http://localhost:3000/api/print/jobs" },
     ];
 
     let target = $state(TARGETS[0]);
-    let watchedPrintJobs: Array<PrintJobStatusType> = $state([]);
+    let watchedPrintJobs: Array<StartJobParams> = $state([]);
     let noCache = $state(true);
     let params: StartJobParams = $state({
         format: "a4",
@@ -28,21 +27,10 @@
     });
 
     async function submit(params: StartJobParams) {
-        const paramsWithRandom = {
+        watchedPrintJobs.push({
             ...params,
             query: `${params.query}${noCache ? `&random=${Math.random()}` : ""}`,
-        };
-        const response = await fetch(`/${target.alias}/api/print/jobs`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(paramsWithRandom),
         });
-        if (response.ok) {
-            const result = (await response.json()) as PrintJobStatusType;
-            watchedPrintJobs.push(result);
-        }
     }
 </script>
 
@@ -126,8 +114,12 @@
         >
     </form>
     <div class="print-jobs">
-        {#each watchedPrintJobs as job}
-            <PrintJobStatus stage={target.alias} statusUrl={job.reportUrl} />
+        {#each watchedPrintJobs as job, i}
+            <PrintJob
+                num={i + 1}
+                stage={target.alias}
+                startPrintJobParams={job}
+            />
         {/each}
     </div>
 </div>
