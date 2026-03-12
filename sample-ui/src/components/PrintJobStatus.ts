@@ -5,5 +5,5 @@ export interface PrintJobStatus {
   pdfUrl: string;
   reportUrl: string;
   started: string;
-  status: "open" | "started" | "processing" | "finished";
+  status: "open" | "started" | "processing" | "finished" | "error";
 }
