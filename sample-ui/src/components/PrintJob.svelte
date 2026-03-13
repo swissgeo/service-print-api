@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PrintJobStatus } from "./PrintJobStatus";
 
-    let { startPrintJobParams, stage, num } = $props();
+    let { startPrintJobParams, stage, baseUrl, num } = $props();
 
     let status: PrintJobStatus | undefined = $state();
 
@@ -23,7 +23,8 @@
 
     async function startPrintJob() {
         try {
-            const response = await fetch(`/${stage}/api/print/jobs`, {
+            const url = baseUrl ? `${baseUrl}/api/print/jobs` : `/${stage}/api/print/jobs`;
+            const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -48,7 +49,7 @@
     async function fetchStatus() {
         isLoading = true;
 
-        const response = await fetch(`/${stage}${status?.reportUrl}`);
+        const response = await fetch(baseUrl ? `${baseUrl}${status?.reportUrl}` : `/${stage}${status?.reportUrl}`);
         status = await response.json();
 
         if (status && status.status !== "finished") {
@@ -65,7 +66,7 @@
     <aside>
         <h3>
             {#if isRunning}
-                <img class="icon" src="/spinner.svg" alt="Loading..." />
+                <img class="icon" src="spinner.svg" alt="Loading..." />
             {/if}
             Print Job #{num}
             <small>({status?.status} - {elapsed}ms)</small>

@@ -10,8 +10,8 @@
         query: string;
     }
     const TARGETS = [
-        { alias: "dev", url: "https://www.dev.sgdi.tech/api/print/jobs" },
-        { alias: "local", url: "http://localhost:3000/api/print/jobs" },
+        { alias: "dev", baseUrl: import.meta.env.PROD ? "https://www.dev.sgdi.tech" : "" },
+        { alias: "local", baseUrl: "" },
     ];
 
     let target = $state(TARGETS[0]);
@@ -45,7 +45,7 @@
                     <option value={t}>{t.alias}</option>
                 {/each}
             </select>
-            {target.url}
+            {target.baseUrl || `(proxy /${target.alias})`}
         </label>
 
         <label>
@@ -118,6 +118,7 @@
             <PrintJob
                 num={i + 1}
                 stage={target.alias}
+                baseUrl={target.baseUrl}
                 startPrintJobParams={job}
             />
         {/each}
