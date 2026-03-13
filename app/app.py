@@ -27,7 +27,7 @@ def add_cors_header(response: Response) -> Response:
     if "Origin" in request.headers and is_domain_allowed(request.headers["Origin"]):
         cors_origin = request.headers["Origin"]
 
-    if "Referer" in request.headers and is_domain_allowed(request.headers["Referer"]):
+    elif "Referer" in request.headers and is_domain_allowed(request.headers["Referer"]):
         cors_origin = request.headers["Referer"]
 
     if cors_origin:
