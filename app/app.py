@@ -33,7 +33,7 @@ def add_cors_header(response: Response) -> Response:
     if cors_origin:
         response.headers["Access-Control-Allow-Origin"] = cors_origin
         response.headers["Vary"] = "Origin"
-        response.headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
+        response.headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS, POST"
         response.headers["Access-Control-Allow-Headers"] = "*"
 
     return response
