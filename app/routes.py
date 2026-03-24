@@ -57,7 +57,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
             ):
                 # if not return directly the info about the already on S3 stored document
                 logger.info("Returning already registered print request")
-                return (build_job_response(item, request.host_url), HTTPStatus.OK)
+                return (build_job_response(item), HTTPStatus.OK)
     # build the full item to insert into dynamodb and send to sqs
     item = {
         "job_id": job_id,
@@ -81,7 +81,7 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
         logger.exception("Error sending item to SQS queue")
         return ({"error": "Error sending print job to queue"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    return (build_job_response(item, request.host_url), HTTPStatus.ACCEPTED)
+    return (build_job_response(item), HTTPStatus.ACCEPTED)
 
 
 @app.route(f"{API_PATH_PREFIX}/jobs", methods=["GET"])
@@ -107,7 +107,7 @@ def print_status(job_id: str) -> Response:
             jsonify({"warning": f"No entry found for job id {job_id}"}),
             HTTPStatus.NOT_FOUND,
         )
-    return make_response(jsonify(build_job_response(item, request.host_url)), HTTPStatus.OK)
+    return make_response(jsonify(build_job_response(item)), HTTPStatus.OK)
 
 
 @app.route(f"{API_PATH_PREFIX}/checker", methods=["GET"])

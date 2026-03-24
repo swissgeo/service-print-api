@@ -27,7 +27,7 @@ class TestPrintStatus:
         assert data["status"] == "finished"
         assert (
             data["reportUrl"]
-            == f"http://localhost{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
+            == f"{API_PATH_PREFIX}/jobs/e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"  # noqa: E501
         )
         assert (
             data["pdfUrl"]

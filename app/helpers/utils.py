@@ -164,20 +164,14 @@ def validate_payload(payload: Any) -> None:
         )
 
 
-def build_job_response(item: dict[str, Any], host_url: str = "") -> dict[str, Any]:
+def build_job_response(item: dict[str, Any]) -> dict[str, Any]:
     """Build the standard job response dict from a DynamoDB item."""
-    pdf_url = item.get("pdf_url") or None
-    if pdf_url and host_url and pdf_url.startswith("/"):
-        pdf_url = f"{host_url.rstrip('/')}{pdf_url}"
-    report_url = f"{API_PATH_PREFIX}/jobs/{item['job_id']}"
-    if host_url:
-        report_url = f"{host_url.rstrip('/')}{report_url}"
     return {
         "status": item["status"],
-        "reportUrl": report_url,
+        "reportUrl": f"{API_PATH_PREFIX}/jobs/{item['job_id']}",
         "created": item["created_timestamp_iso_8601"],
         "started": item.get("started_timestamp_iso_8601") or None,
         "finished": item.get("finished_timestamp_iso_8601") or None,
-        "pdfUrl": pdf_url,
+        "pdfUrl": item.get("pdf_url") or None,
         "message": item.get("message") or None,
     }
