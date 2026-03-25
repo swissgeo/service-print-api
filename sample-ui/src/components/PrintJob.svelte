@@ -2,6 +2,7 @@
     import type { PrintJobStatus } from "./PrintJobStatus";
 
     let { startPrintJobParams, stage, baseUrl, num } = $props();
+    const useProxy = import.meta.env.DEV;
 
     let status: PrintJobStatus | undefined = $state();
 
@@ -23,8 +24,7 @@
 
     async function startPrintJob() {
         try {
-            const url = baseUrl ? `${baseUrl}/api/print/jobs` : `/${stage}/api/print/jobs`;
-            const response = await fetch(url, {
+            const response = await fetch(useProxy ? `/${stage}/api/print/jobs` : `${baseUrl}/api/print/jobs`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -49,7 +49,7 @@
     async function fetchStatus() {
         isLoading = true;
 
-        const response = await fetch(baseUrl ? `${baseUrl}${status?.reportUrl}` : `/${stage}${status?.reportUrl}`);
+        const response = await fetch(useProxy ? `/${stage}${status?.reportUrl}` : `${baseUrl}${status?.reportUrl}`);
         status = await response.json();
 
         if (status && status.status !== "finished") {
@@ -76,7 +76,7 @@
         {/if}
         {#if status}
             <summary>
-                {#if status?.pdfUrl}<a href={status?.pdfUrl} target="_blank"
+                {#if status?.pdfUrl}<a href={`${baseUrl}${status.pdfUrl}`} target="_blank"
                         >Download PDF</a
                     >{/if}
                 <details>

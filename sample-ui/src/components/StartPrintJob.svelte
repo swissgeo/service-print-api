@@ -10,8 +10,8 @@
         query: string;
     }
     const TARGETS = [
-        { alias: "dev", baseUrl: import.meta.env.PROD ? "https://www.dev.sgdi.tech" : "" },
-        { alias: "local", baseUrl: "" },
+        { alias: "dev", baseUrl: "https://www.dev.sgdi.tech" },
+        { alias: "local", baseUrl: "http://localhost:3000" },
     ];
 
     let target = $state(TARGETS[0]);
@@ -45,7 +45,7 @@
                     <option value={t}>{t.alias}</option>
                 {/each}
             </select>
-            {target.baseUrl || `(proxy /${target.alias})`}
+            {target.baseUrl}
         </label>
 
         <label>
