@@ -17,7 +17,7 @@ if ENV_FILE:
 ALLOWED_DOMAINS_STRING = os.getenv("ALLOWED_DOMAINS", ".*")
 ALLOWED_DOMAINS = ALLOWED_DOMAINS_STRING.split(",")
 ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
-LOCALSTACK_ENDPOINT = os.environ.get("LOCALSTACK_ENDPOINT", "http://localhost:4566")
+MOTO_ENDPOINT = os.environ.get("MOTO_ENDPOINT", "http://localhost:5000")
 AWS_REGION = os.environ.get("AWS_REGION", "eu-central-1")
 
 CACHE_CONTROL = os.getenv("CACHE_CONTROL", "no-store")
