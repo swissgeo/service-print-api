@@ -90,12 +90,12 @@ ci-check-format: format ## Check the format (CI)
 
 
 .PHONY: serve
-serve: start-localstack ## Serve the application locally
+serve: start-ministack ## Serve the application locally
 	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 
 .PHONY: gunicornserve
-gunicornserve: start-localstack ## Serve the application locally with gunicorn
+gunicornserve: start-ministack ## Serve the application locally with gunicorn
 	ENV_FILE=.env $(UV_RUN) python -m app.wsgi
 
 
@@ -121,7 +121,7 @@ dockerpush: dockerbuild ## Push to the docker registry
 
 
 .PHONY: dockerrun
-dockerrun: start-localstack dockerbuild ## Run the locally built docker image
+dockerrun: start-ministack dockerbuild ## Run the locally built docker image
 	docker run \
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
@@ -136,8 +136,8 @@ lint: ## Run the linter on the code base and type-checker ty
 	$(TY) check
 
 
-.PHONY: start-localstack
-start-localstack: ## Run dynamodb and sqs locally
+.PHONY: start-ministack
+start-ministack: ## Run ministack locally (emulates DynamoDB, SQS, S3)
 	docker compose --env-file=${ENV_FILE} up -d
 
 
