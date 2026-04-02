@@ -67,11 +67,13 @@ To create and activate a virtual Python environment with all dependencies instal
 make setup
 ```
 
-To start the local aws stack for development (DynamoDB, SQS main queue + dead-letter queue, S3):
+To start the local AWS stack for development (DynamoDB, SQS main queue + dead-letter queue, S3):
 
 ```bash
-make start-localstack
+make start-moto
 ```
+
+If a moto server is already running (e.g. started from `service-print-renderer`), `make start-moto` reuses it and only reruns the init containers.
 
 ### Updating Packages
 
@@ -106,8 +108,8 @@ The service is configured by Environment Variable:
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
 | API_PATH_PREFIX | `/api/print` | Base path prefix for all API routes |
-| AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
-| LOCALSTACK_ENDPOINT | `http://localhost:4566` | Endpoint URL of the LocalStack instance used in local development |
+| AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
+| MOTO_ENDPOINT | `http://localhost:5000` | Endpoint URL of the moto server (local development only) |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
 | CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
