@@ -14,6 +14,7 @@
 - [Local Development](#local-development)
   - [Dependencies](#dependencies)
   - [Setup](#setup)
+  - [Accessing Local AWS Services](#accessing-local-aws-services)
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
   - [OpenTelemetry (tracing)](#opentelemetry-tracing)
@@ -74,6 +75,35 @@ make start-moto
 ```
 
 If a moto server is already running (e.g. started from `service-print-renderer`), `make start-moto` reuses it and only reruns the init containers.
+
+### Accessing Local AWS Services
+
+When the local stack is running, you can inspect AWS resources using the AWS CLI by pointing it at the moto server. Use the same credentials and region that the init containers use:
+
+```bash
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws sqs list-queues \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+```
+
+The same pattern applies to other services:
+
+```bash
+# List DynamoDB tables
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws dynamodb list-tables \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+
+# List S3 buckets
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws s3api list-buckets \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+```
+
+> **Note:** The credentials (`123`/`123`) and region (`eu-central-1`) must match what the init containers used, as moto scopes resources by account ID (derived from the access key) and region.
 
 ### Updating Packages
 
