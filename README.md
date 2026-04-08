@@ -139,7 +139,8 @@ The service is configured by Environment Variable:
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
 | API_PATH_PREFIX | `/api/print` | Base path prefix for all API routes |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
-| MOTO_ENDPOINT | `http://localhost:5000` | Endpoint URL of the moto server (local development only) |
+| MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
+| MOTO_PORT | `5000` | Port of the moto server (local development only) |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
 | CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
