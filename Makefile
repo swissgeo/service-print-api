@@ -126,7 +126,8 @@ dockerrun: start-moto dockerbuild ## Run the locally built docker image
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
-		--net=host \
+		--network shared_network_local \
+		-e MOTO_ENDPOINT=http://moto-server:5000 \
 		$(DOCKER_IMG_LOCAL_TAG)
 
 
@@ -138,7 +139,8 @@ lint: ## Run the linter on the code base and type-checker ty
 
 .PHONY: start-moto
 start-moto: ## Run moto server locally and initialize resources (DynamoDB, SQS, S3)
-	docker inspect --format='{{.State.Running}}' moto-server 2>/dev/null | grep -q true || docker compose --env-file=${ENV_FILE} up -d moto-server
+	docker network create shared_network_local 2>/dev/null || true
+	docker inspect moto-server >/dev/null 2>&1 && docker start moto-server || docker compose --env-file=${ENV_FILE} up -d moto-server
 	docker compose --env-file=${ENV_FILE} up --remove-orphans init-dynamo init-sqs init-s3
 
 
