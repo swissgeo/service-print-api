@@ -123,7 +123,7 @@ dockerpush: dockerbuild ## Push to the docker registry
 .PHONY: dockerrun
 dockerrun: start-moto dockerbuild ## Run the locally built docker image
 	docker run \
-		-it -p $(HTTP_PORT):8080 \
+		-it -p $(HTTP_PORT):$(HTTP_PORT) \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
 		--network shared_network_local \
