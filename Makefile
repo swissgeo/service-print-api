@@ -90,12 +90,12 @@ ci-check-format: format ## Check the format (CI)
 
 
 .PHONY: serve
-serve: start-localstack ## Serve the application locally
+serve: start-moto ## Serve the application locally
 	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
 
 
 .PHONY: gunicornserve
-gunicornserve: start-localstack ## Serve the application locally with gunicorn
+gunicornserve: start-moto ## Serve the application locally with gunicorn
 	ENV_FILE=.env $(UV_RUN) python -m app.wsgi
 
 
@@ -121,12 +121,13 @@ dockerpush: dockerbuild ## Push to the docker registry
 
 
 .PHONY: dockerrun
-dockerrun: start-localstack dockerbuild ## Run the locally built docker image
+dockerrun: start-moto dockerbuild ## Run the locally built docker image
 	docker run \
-		-it -p $(HTTP_PORT):8080 \
+		-it -p $(HTTP_PORT):$(HTTP_PORT) \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
-		--net=host \
+		--network shared_network_local \
+		-e MOTO_HOST=moto-server \
 		$(DOCKER_IMG_LOCAL_TAG)
 
 
@@ -136,9 +137,17 @@ lint: ## Run the linter on the code base and type-checker ty
 	$(TY) check
 
 
-.PHONY: start-localstack
-start-localstack: ## Run dynamodb and sqs locally
-	docker compose --env-file=${ENV_FILE} up -d
+.PHONY: start-moto
+start-moto: ## Run moto server locally and initialize resources (DynamoDB, SQS, S3)
+	docker network create shared_network_local 2>/dev/null || true
+	# reuse existing container if present, otherwise create it via compose
+	docker inspect moto-server >/dev/null 2>&1 && docker start moto-server || docker compose --env-file=${ENV_FILE} up -d moto-server
+	# run one-shot init containers to create DynamoDB table, SQS queues and S3 bucket
+	docker compose --env-file=${ENV_FILE} up --remove-orphans init-dynamo init-sqs init-s3
+
+.PHONY: stop-moto
+stop-moto: ## Stop the moto server container
+	docker stop moto-server 2>/dev/null || true
 
 
 .PHONY: test-ci

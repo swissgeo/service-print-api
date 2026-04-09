@@ -14,6 +14,7 @@
 - [Local Development](#local-development)
   - [Dependencies](#dependencies)
   - [Setup](#setup)
+  - [Accessing Local AWS Services](#accessing-local-aws-services)
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
   - [OpenTelemetry (tracing)](#opentelemetry-tracing)
@@ -67,11 +68,42 @@ To create and activate a virtual Python environment with all dependencies instal
 make setup
 ```
 
-To start the local aws stack for development (DynamoDB, SQS main queue + dead-letter queue, S3):
+To start the local AWS stack for development (DynamoDB, SQS main queue + dead-letter queue, S3):
 
 ```bash
-make start-localstack
+make start-moto
 ```
+
+If a moto server is already running (e.g. started from `service-print-renderer`), `make start-moto` reuses it and only reruns the init containers.
+
+### Accessing Local AWS Services
+
+When the local stack is running, you can inspect AWS resources using the AWS CLI by pointing it at the moto server. Use the same credentials and region that the init containers use:
+
+```bash
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws sqs list-queues \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+```
+
+The same pattern applies to other services:
+
+```bash
+# List DynamoDB tables
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws dynamodb list-tables \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+
+# List S3 buckets
+AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
+  aws s3api list-buckets \
+  --endpoint-url http://localhost:5000 \
+  --region eu-central-1
+```
+
+> **Note:** The credentials (`123`/`123`) and region (`eu-central-1`) must match what the init containers used, as moto scopes resources by account ID (derived from the access key) and region.
 
 ### Updating Packages
 
@@ -106,8 +138,9 @@ The service is configured by Environment Variable:
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
 | API_PATH_PREFIX | `/api/print` | Base path prefix for all API routes |
-| AWS_LOCAL | `false` | Set to `true` to point AWS clients at LocalStack instead of real AWS |
-| LOCALSTACK_ENDPOINT | `http://localhost:4566` | Endpoint URL of the LocalStack instance used in local development |
+| AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
+| MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
+| MOTO_PORT | `5000` | Port of the moto server (local development only) |
 | ALLOWED_DOMAINS | `.*` | Comma-separated list of regex patterns for CORS allowed origins |
 | CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
