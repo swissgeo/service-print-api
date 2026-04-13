@@ -163,8 +163,7 @@ The service is configured by Environment Variable:
 | OTEL_ENABLE_FLASK | `false` | Set to `true` to enable automatic tracing of Flask HTTP requests |
 | OTEL_ENABLE_LOGGING | `false` | Set to `true` to inject `otelTraceID` and `otelSpanID` into log records |
 | OTEL_ENABLE_BOTOCORE | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
-| OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
-| OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
+| OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4318` | OTLP HTTP endpoint of the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
 | OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
@@ -178,4 +177,6 @@ docker compose -f docker-compose-otel.yml up -d
 ```
 
 Then start the app with `make gunicornserve`. Traces are visible at **<http://localhost:9411>** (Zipkin UI).
+
+> **Note:** Tracing only works with `make gunicornserve`. `make serve` uses Flask's built-in dev server, which never calls the gunicorn `post_fork` hook where the trace provider is registered.
 
