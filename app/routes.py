@@ -11,7 +11,7 @@ from app.app import app
 from app.config.settings import API_PATH_PREFIX, EXPIRATION_TIME_HH_PRINT_DOC
 from app.config.version import APP_VERSION
 from app.helpers.dynamo_db import get_dynamodb_table, get_print_job, insert_dynamodb
-from app.helpers.sqs_queue import send_to_queue
+from app.helpers.sqs_queue import is_queue_overloaded, send_to_queue
 from app.helpers.utils import (
     build_job_response,
     dict_to_sha256_hash,
@@ -21,13 +21,15 @@ from app.helpers.utils import (
     validate_payload,
 )
 
+_OVERLOADED_RESPONSE = {"status": "error", "message": "Service overloaded, please try again later"}
+
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 
 @app.route(f"{API_PATH_PREFIX}/jobs", methods=["POST"])
 @tracer.start_as_current_span("routes.start_print")
-def start_print() -> tuple[dict[str, Any], HTTPStatus]:
+def start_print() -> tuple[dict[str, Any], HTTPStatus] | Response:
     payload = request.get_json()
     try:
         validate_payload(payload)
@@ -58,6 +60,14 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus]:
                 # if not return directly the info about the already on S3 stored document
                 logger.info("Returning already registered print request")
                 return (build_job_response(item), HTTPStatus.OK)
+    if is_queue_overloaded():
+        logger.warning("SQS queue is overloaded, rejecting new print job")
+        now = get_iso_8601_timestamp()
+        return make_response(
+            jsonify({**_OVERLOADED_RESPONSE, "created": now, "started": now, "finished": now}),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
+
     # build the full item to insert into dynamodb and send to sqs
     item = {
         "job_id": job_id,
