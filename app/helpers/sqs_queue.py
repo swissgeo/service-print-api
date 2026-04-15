@@ -16,6 +16,7 @@ from app.config.settings import (
     AWS_READ_TIMEOUT,
     AWS_REGION,
     MOTO_ENDPOINT,
+    SQS_QUEUE_MAX_LENGTH,
     SQS_QUEUE_NAME,
 )
 
@@ -58,6 +59,30 @@ def get_sqs_client() -> SQSClient:
         raise
     else:
         return sqs
+
+
+def is_queue_overloaded() -> bool:
+    """Returns True if the queue length exceeds SQS_QUEUE_MAX_LENGTH.
+
+    Uses ApproximateNumberOfMessages, which is eventually consistent.
+    On any SQS error, fails open (returns False) so the caller can proceed.
+    """
+    sqs = get_sqs_client()
+    try:
+        queue_url = sqs.get_queue_url(QueueName=SQS_QUEUE_NAME)["QueueUrl"]
+        response = sqs.get_queue_attributes(
+            QueueUrl=queue_url,
+            AttributeNames=["ApproximateNumberOfMessages"],
+        )
+        length = int(response["Attributes"]["ApproximateNumberOfMessages"])
+        logger.debug(
+            "SQS queue %s has %d messages (max: %d)", SQS_QUEUE_NAME, length, SQS_QUEUE_MAX_LENGTH
+        )
+    except ConnectTimeoutError, ReadTimeoutError, ClientError:
+        logger.exception("Could not check queue length for %s, failing open", SQS_QUEUE_NAME)
+        return False
+    else:
+        return length >= SQS_QUEUE_MAX_LENGTH
 
 
 def send_to_queue(message: dict[str, Any]) -> None:
