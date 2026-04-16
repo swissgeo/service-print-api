@@ -18,6 +18,11 @@ app.config.from_mapping({"TRAP_HTTP_EXCEPTIONS": True})
 init_logging()
 
 
+@app.before_request
+def record_request_start() -> None:
+    g.request_started = time.time()
+
+
 # Add CORS Headers to all request
 @app.after_request
 def add_cors_header(response: Response) -> Response:
