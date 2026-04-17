@@ -5,31 +5,28 @@ from botocore.exceptions import ClientError
 
 import pytest
 
+from app.config.settings import SQS_QUEUE_MAX_LENGTH
 from app.helpers.sqs_queue import is_queue_overloaded, send_to_queue
 
 
 class TestIsQueueOverloaded:
-    @patch("app.helpers.sqs_queue.SQS_QUEUE_MAX_LENGTH", 100)
+    @pytest.mark.parametrize(
+        ("length", "expected"),
+        [
+            (SQS_QUEUE_MAX_LENGTH - 1, False),
+            (SQS_QUEUE_MAX_LENGTH, False),
+            (SQS_QUEUE_MAX_LENGTH + 1, True),
+        ],
+    )
     @patch("app.helpers.sqs_queue.get_sqs_client")
-    def test_returns_false_when_queue_below_threshold(self, mock_get_client):
+    def test_overloaded_boundary(self, mock_get_client, length, expected):
         mock_sqs = MagicMock()
         mock_sqs.get_queue_url.return_value = {"QueueUrl": "http://localhost/queue"}
         mock_sqs.get_queue_attributes.return_value = {
-            "Attributes": {"ApproximateNumberOfMessages": "10"}
+            "Attributes": {"ApproximateNumberOfMessages": str(length)}
         }
         mock_get_client.return_value = mock_sqs
-        assert is_queue_overloaded() is False
-
-    @patch("app.helpers.sqs_queue.SQS_QUEUE_MAX_LENGTH", 100)
-    @patch("app.helpers.sqs_queue.get_sqs_client")
-    def test_returns_true_when_queue_at_or_above_threshold(self, mock_get_client):
-        mock_sqs = MagicMock()
-        mock_sqs.get_queue_url.return_value = {"QueueUrl": "http://localhost/queue"}
-        mock_sqs.get_queue_attributes.return_value = {
-            "Attributes": {"ApproximateNumberOfMessages": 150}
-        }
-        mock_get_client.return_value = mock_sqs
-        assert is_queue_overloaded() is True
+        assert is_queue_overloaded() is expected
 
 
 class TestSendToQueue:
