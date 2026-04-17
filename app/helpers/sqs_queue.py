@@ -82,7 +82,7 @@ def is_queue_overloaded() -> bool:
         logger.exception("Could not check queue length for %s, failing open", SQS_QUEUE_NAME)
         return False
     else:
-        return length >= SQS_QUEUE_MAX_LENGTH
+        return length > SQS_QUEUE_MAX_LENGTH
 
 
 def send_to_queue(message: dict[str, Any]) -> None:

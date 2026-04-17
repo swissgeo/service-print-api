@@ -2,7 +2,15 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
+import pytest
+
 from app.config.settings import API_PATH_PREFIX
+
+
+@pytest.fixture(autouse=True)
+def mock_is_queue_overloaded():
+    with patch("app.routes.is_queue_overloaded", return_value=False):
+        yield
 
 
 class TestStartPrint:
@@ -32,6 +40,27 @@ class TestStartPrint:
         assert "reportUrl" in data
         mock_insert.assert_called_once()
         mock_send.assert_called_once()
+
+    @patch("app.routes.is_queue_overloaded", return_value=True)
+    @patch("app.routes.get_dynamodb_table")
+    def test_overloaded_queue_returns_503(self, mock_get_table, mock_overloaded, client):  # noqa: ARG002
+        mock_table = MagicMock()
+        mock_table.get_item.return_value = {}
+        mock_get_table.return_value = mock_table
+
+        response = client.post(
+            f"{API_PATH_PREFIX}/jobs",
+            json={
+                "format": "a4",
+                "orientation": "landscape",
+                "resolution": 96,
+                "scale": 25000,
+                "view": "print_map",
+                "query": "key=value",
+            },
+        )
+
+        assert response.status_code == 503
 
     def test_invalid_payload_returns_400(self, client):
         response = client.post(
