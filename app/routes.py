@@ -21,8 +21,6 @@ from app.helpers.utils import (
     validate_payload,
 )
 
-_OVERLOADED_RESPONSE = {"status": "error", "message": "Service overloaded, please try again later"}
-
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
@@ -64,7 +62,15 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus] | Response:
         logger.warning("SQS queue is overloaded, rejecting new print job")
         now = get_iso_8601_timestamp()
         return make_response(
-            jsonify({**_OVERLOADED_RESPONSE, "created": now, "started": now, "finished": now}),
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Service overloaded, please try again later",
+                    "created": now,
+                    "started": now,
+                    "finished": now,
+                }
+            ),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
