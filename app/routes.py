@@ -60,17 +60,8 @@ def start_print() -> tuple[dict[str, Any], HTTPStatus] | Response:
                 return (build_job_response(item), HTTPStatus.OK)
     if is_queue_overloaded():
         logger.warning("SQS queue is overloaded, rejecting new print job")
-        now = get_iso_8601_timestamp()
-        return make_response(
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "Service overloaded, please try again later",
-                    "created": now,
-                    "started": now,
-                    "finished": now,
-                }
-            ),
+        return (
+            {"error": "Service overloaded, please try again later"},
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
