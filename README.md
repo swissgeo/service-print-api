@@ -149,6 +149,7 @@ The service is configured by Environment Variable:
 | SQS_DL_QUEUE_NAME | `service-print-jobs-dlq-local` | The name of the SQS dead-letter queue |
 | SQS_MAX_RECEIVE_COUNT | `3` | Number of times a message can be received before SQS routes it to the DLQ automatically |
 | SQS_VISIBILITY_TIMEOUT | `60` | How long (in seconds) a received message is hidden from other consumers; after expiry SQS redelivers it (or routes to DLQ if `maxReceiveCount` is reached) |
+| SQS_QUEUE_MAX_LENGTH | `100` | Maximum number of messages in the queue before new print requests are rejected with 503. SQS has no built-in queue length limit, so this is an application-level throttle to prevent workers from being overwhelmed by a backlog they cannot process in time. |
 | EXPIRATION_TIME_HH_PRINT_DOC | `24` | Expiration time in hours before re-generating an already existing PDF |
 | TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
 | MAX_PAYLOAD_SIZE_BYTES | `102400` | Maximum allowed request payload size in bytes (default: 100 KB) |
