@@ -24,7 +24,7 @@
 
     async function startPrintJob() {
         try {
-            const response = await fetch(useProxy ? `/${stage}/api/print/jobs` : `${baseUrl}/api/print/jobs`, {
+            const response = await fetch(useProxy ? `/${stage}/api/wps/v1/print/jobs` : `${baseUrl}/api/wps/v1/print/jobs`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
