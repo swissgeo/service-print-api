@@ -34,7 +34,7 @@ AWS_CONNECT_TIMEOUT: int = int(os.environ.get("AWS_CONNECT_TIMEOUT", "5"))
 AWS_READ_TIMEOUT: int = int(os.environ.get("AWS_READ_TIMEOUT", "30"))
 TTL_DYNAMODB_ITEM_HH: int = int(os.environ.get("TTL_DYNAMODB_ITEM_HH", "48"))
 MAX_PAYLOAD_SIZE_BYTES: int = int(os.environ.get("MAX_PAYLOAD_SIZE_BYTES", str(100 * 1024)))
-API_PATH_PREFIX: str = os.getenv("API_PATH_PREFIX", "/api/print")
+API_PATH_PREFIX: str = os.getenv("API_PATH_PREFIX", "/api/wps/v1/print")
 
 # AWS_LOCAL
 AWS_LOCAL: bool = os.environ.get("AWS_LOCAL", "false").lower() == "true"

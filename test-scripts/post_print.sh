@@ -9,8 +9,8 @@ random_payload=$(head -200 /dev/urandom | cksum | cut -f1 -d " ")
 #view=print_legend
 view=print_map
 #curl --location --request POST 'https://5jel4tqfhdrsz3yriu3yz7wbvm0poynq.lambda-url.eu-central-1.on.aws/jobs' \
-#curl -i --location --request POST 'https://www.dev.sgdi.tech/api/print/jobs' \
-curl -i --location --request POST 'http://localhost:3000/api/print/jobs' \
+#curl -i --location --request POST 'https://www.dev.sgdi.tech/api/wps/v1/print/jobs' \
+curl -i --location --request POST 'http://localhost:3000/api/wps/v1/print/jobs' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "format": "a4",
