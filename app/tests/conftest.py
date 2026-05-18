@@ -1,27 +1,19 @@
-from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
+
+from httpx import ASGITransport, AsyncClient
 
 import pytest
 
-if TYPE_CHECKING:
-    from flask import Flask
-    from flask.testing import FlaskClient
-
-from app import create_app  # Adjust import to match your app structure
+from app.dependencies import get_session
+from app.main import app
 
 
 @pytest.fixture
-def app() -> Flask:
-    """Create application for testing."""
-    app = create_app()
-    app.config.update(
-        {
-            "TESTING": True,
-        }
-    )
-    return app
+async def client():
+    def _mock_session() -> MagicMock:
+        return MagicMock()
 
-
-@pytest.fixture
-def client(app: Flask) -> FlaskClient:
-    """Create a test client for the app."""
-    return app.test_client()
+    app.dependency_overrides[get_session] = _mock_session
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.pop(get_session, None)

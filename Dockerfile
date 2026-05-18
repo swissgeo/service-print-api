@@ -34,6 +34,8 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 # for an example.
 ENV UV_PYTHON_DOWNLOADS=0
 
+WORKDIR ${INSTALL_DIR}
+
 # Install all the dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -97,8 +99,7 @@ USER ${USER}
 
 EXPOSE ${HTTP_PORT}
 
-ENTRYPOINT ["python"]
-CMD ["-m", "app.wsgi"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
 
 ###########################################################
@@ -107,7 +108,7 @@ FROM base AS production
 LABEL target=production
 ENV DEBUG=0
 
-COPY --from=builder .venv/ ${INSTALL_DIR}/.venv/
+COPY --from=builder ${INSTALL_DIR}/.venv/ ${INSTALL_DIR}/.venv/
 
 COPY --from=builder ${INSTALL_DIR}/ ${INSTALL_DIR}/
 
@@ -135,5 +136,4 @@ USER ${USER}
 
 EXPOSE ${HTTP_PORT}
 
-ENTRYPOINT ["python"]
-CMD ["-m", "app.wsgi"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

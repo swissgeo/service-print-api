@@ -26,6 +26,8 @@ PYTHON := $(UV_RUN) python3
 TEST := $(UV_RUN) pytest
 RUFF := $(UV_RUN) ruff
 TY := $(UV_RUN) ty
+FASTAPI := $(UV_RUN) fastapi
+UVICORN := $(UV_RUN) uvicorn
 
 # Docker variables?
 DOCKER_REGISTRY = 074597099015.dkr.ecr.eu-central-1.amazonaws.com
@@ -90,13 +92,8 @@ ci-check-format: format ## Check the format (CI)
 
 
 .PHONY: serve
-serve: start-moto ## Serve the application locally
-	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
-
-
-.PHONY: gunicornserve
-gunicornserve: start-moto ## Serve the application locally with gunicorn
-	ENV_FILE=.env $(UV_RUN) python -m app.wsgi
+serve: start-moto ## Serve the application for development
+	${FASTAPI} dev --port ${HTTP_PORT}
 
 
 .PHONY: dockerlogin
@@ -123,7 +120,7 @@ dockerpush: dockerbuild ## Push to the docker registry
 .PHONY: dockerrun
 dockerrun: start-moto dockerbuild ## Run the locally built docker image
 	docker run \
-		-it -p $(HTTP_PORT):$(HTTP_PORT) \
+		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
 		--network shared_network_local \

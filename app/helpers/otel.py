@@ -1,87 +1,96 @@
-from os import getenv
-from typing import TYPE_CHECKING
+import logging
 
-if TYPE_CHECKING:
-    from flask import Flask
+from opentelemetry import trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from fastapi import FastAPI
 
-def strtobool(value: str) -> bool:
-    """Convert a string representation of truth to True or False.
+from app.config.settings import get_settings
 
-    True values: 'y', 'yes', 'true', 'on', '1'.
-    False values: 'n', 'no', 'false', 'off', '0', ''.
-
-    Raises ValueError if value is anything else.
-    """
-    value = value.lower().strip()
-    if value in ("true", "1", "yes", "y", "on"):
-        return True
-    if value in ("false", "0", "no", "n", "off", ""):
-        return False
-    raise ValueError(f"Cannot convert '{value}' to boolean")
-
-
-def initialize() -> None:
-    """Initialize OTEL instrumentation for logging and botocore.
-
-    Should be called before the Flask app is created so that boto3/ssl are
-    instrumented before they are imported. Controlled by env vars:
-    - OTEL_SDK_DISABLED: disables all instrumentation when true
-    - OTEL_ENABLE_LOGGING: enables LoggingInstrumentor when true
-    - OTEL_ENABLE_BOTOCORE: enables BotocoreInstrumentor when true
-    """
-    if not strtobool(getenv("OTEL_SDK_DISABLED", "false")):
-        if strtobool(getenv("OTEL_ENABLE_LOGGING", "false")):
-            from opentelemetry.instrumentation.logging import LoggingInstrumentor
-
-            LoggingInstrumentor().instrument()
-        if strtobool(getenv("OTEL_ENABLE_BOTOCORE", "false")):
-            from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
-
-            BotocoreInstrumentor().instrument()
+# Resource.create() reads OTEL_RESOURCE_ATTRIBUTES from the environment automatically.
+_resource = Resource.create()
 
 
-def initialize_flask(app: Flask) -> None:
-    """Instrument the Flask app with OTEL tracing.
+def _setup_providers() -> tuple[LoggerProvider | None, TracerProvider | None]:
+    settings = get_settings()
 
-    Should be called after the app is created. Controlled by env vars:
-    - OTEL_SDK_DISABLED: disables all instrumentation when true
-    - OTEL_ENABLE_FLASK: enables FlaskInstrumentor when true
-    """
-    if not strtobool(getenv("OTEL_SDK_DISABLED", "false")) and strtobool(
-        getenv("OTEL_ENABLE_FLASK", "false")
-    ):
-        from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    if settings.otel_sdk_disabled:
+        return None, None
 
-        FlaskInstrumentor().instrument_app(app)
+    log_provider = LoggerProvider(resource=_resource)
+    set_logger_provider(log_provider)
+
+    trace_provider = TracerProvider(resource=_resource)
+    trace.set_tracer_provider(trace_provider)
+
+    return log_provider, trace_provider
 
 
-def setup_trace_provider() -> None:
-    """Configure and register the OTLP trace provider.
+def _setup_exporters(
+    log_provider: LoggerProvider | None,
+    trace_provider: TracerProvider | None,
+) -> None:
+    settings = get_settings()
 
-    Should be called in the gunicorn post_fork hook so each worker gets its
-    own tracer provider. Controlled by env vars:
-    - OTEL_SDK_DISABLED: disables all instrumentation when true
-    - OTEL_EXPORTER_OTLP_ENDPOINT: OTLP collector endpoint (default: http://localhost:4317)
-    - OTEL_EXPORTER_OTLP_HEADERS: optional headers for the exporter
-    - OTEL_EXPORTER_OTLP_INSECURE: use insecure (plaintext) connection when true
-    """
-    if not strtobool(getenv("OTEL_SDK_DISABLED", "false")):
-        from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-            OTLPSpanExporter,
-        )
-        from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    if settings.otel_sdk_disabled or trace_provider is None:
+        return
 
-        span_processor = BatchSpanProcessor(
-            OTLPSpanExporter(
-                endpoint=getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
-                headers=getenv("OTEL_EXPORTER_OTLP_HEADERS"),
-                insecure=strtobool(getenv("OTEL_EXPORTER_OTLP_INSECURE", "false")),
+    endpoint = settings.otel_exporter_otlp_endpoint
+    insecure = settings.otel_exporter_otlp_insecure
+    headers = settings.otel_exporter_otlp_headers or None
+
+    trace_provider.add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint, insecure=insecure, headers=headers))
+    )
+
+    if settings.otel_enable_logging and log_provider is not None:
+        log_provider.add_log_record_processor(
+            BatchLogRecordProcessor(
+                OTLPLogExporter(endpoint=endpoint, insecure=insecure, headers=headers)
             )
         )
-        provider = TracerProvider(resource=Resource.create())
-        provider.add_span_processor(span_processor)
-        trace.set_tracer_provider(provider)
+
+
+# ---------------------------------------------------------------------------
+# Import-time setup.
+# No lazy imports needed — uvicorn has no monkey-patching constraints.
+# ---------------------------------------------------------------------------
+log_provider, trace_provider = _setup_providers()
+_setup_exporters(log_provider, trace_provider)
+
+
+def get_otel_handler() -> logging.Handler:
+    """Return the OTEL logging handler for use in a logging YAML config."""
+    if log_provider is None:
+        raise ValueError("OTEL log provider is not initialised (OTEL_SDK_DISABLED=true?)")
+    return LoggingHandler(logger_provider=log_provider)
+
+
+def initialize_instrumentation(app: FastAPI) -> None:
+    """Instrument FastAPI and botocore."""
+    settings = get_settings()
+
+    if settings.otel_sdk_disabled:
+        return
+
+    if settings.otel_enable_botocore:
+        BotocoreInstrumentor().instrument()
+    if settings.otel_enable_fastapi:
+        FastAPIInstrumentor.instrument_app(app)
+
+
+def shutdown_otel() -> None:
+    """Flush and shutdown OTEL providers."""
+    if trace_provider is not None:
+        trace_provider.shutdown()
+    if log_provider is not None:
+        log_provider.shutdown()

@@ -1,43 +1,91 @@
 import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Annotated
 
-"""
-The Config contains everything needed to run the service. Most entries have a default
-value and an environment value to override it.
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-"""
-ENV_FILE = os.getenv("ENV_FILE", None)
-if ENV_FILE:
-    from dotenv import load_dotenv
-
-    print(f"Running locally hence injecting env vars from {ENV_FILE}")  # noqa: T201
-    load_dotenv(ENV_FILE, override=True, verbose=True)
+from fastapi import Depends
+from pydantic import field_validator
 
 
-# Definition of the allowed domains for CORS implementation
-ALLOWED_DOMAINS_STRING = os.getenv("ALLOWED_DOMAINS", ".*")
-ALLOWED_DOMAINS = ALLOWED_DOMAINS_STRING.split(",")
-ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
-MOTO_HOST = os.environ.get("MOTO_HOST", "localhost")
-MOTO_PORT = os.environ.get("MOTO_PORT", "5000")
-MOTO_ENDPOINT = f"http://{MOTO_HOST}:{MOTO_PORT}"
-AWS_REGION = os.environ.get("AWS_REGION", "eu-central-1")
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=(".env"),
+        env_file_encoding="utf-8",
+        enable_decoding=False,
+        extra="ignore",
+    )
 
-CACHE_CONTROL = os.getenv("CACHE_CONTROL", "no-store")
-CACHE_CONTROL_4XX = os.getenv("CACHE_CONTROL_4XX", "public, max-age=120")
+    # API
+    api_path_prefix: str = "/api/wps/v1/print"
 
-DYNAMODB_TABLE_NAME: str = str(os.environ.get("DYNAMODB_TABLE_NAME", "service-print-jobs-local"))
-SQS_QUEUE_NAME: str = str(os.environ.get("SQS_QUEUE_NAME", "service-print-jobs-queue-local"))
+    # CORS: comma-separated regex patterns, e.g. ".*" or "example\.com,localhost"
+    allowed_domains: list[str] = [".*"]
 
-EXPIRATION_TIME_HH_PRINT_DOC: int = int(os.environ.get("EXPIRATION_TIME_HH_PRINT_DOC", "24"))
-SQS_QUEUE_MAX_LENGTH: int = int(os.environ.get("SQS_QUEUE_MAX_LENGTH", "100"))
-AWS_CONNECT_TIMEOUT: int = int(os.environ.get("AWS_CONNECT_TIMEOUT", "5"))
-AWS_READ_TIMEOUT: int = int(os.environ.get("AWS_READ_TIMEOUT", "30"))
-TTL_DYNAMODB_ITEM_HH: int = int(os.environ.get("TTL_DYNAMODB_ITEM_HH", "48"))
-MAX_PAYLOAD_SIZE_BYTES: int = int(os.environ.get("MAX_PAYLOAD_SIZE_BYTES", str(100 * 1024)))
-API_PATH_PREFIX: str = os.getenv("API_PATH_PREFIX", "/api/wps/v1/print")
+    # Cache-Control headers
+    cache_control: str = "no-store"
+    cache_control_4xx: str = "public, max-age=120"
 
-# AWS_LOCAL
-AWS_LOCAL: bool = os.environ.get("AWS_LOCAL", "false").lower() == "true"
-if AWS_LOCAL:
+    # AWS
+    aws_region: str = "eu-central-1"
+    aws_local: bool = False
+    moto_host: str = "localhost"
+    moto_port: str = "5000"
+    aws_connect_timeout: int = 5
+    aws_read_timeout: int = 30
+
+    # DynamoDB
+    dynamodb_table_name: str = "service-print-jobs-local"
+
+    # SQS
+    sqs_queue_name: str = "service-print-jobs-queue-local"
+    sqs_queue_max_length: int = 100
+
+    # Job behaviour
+    expiration_time_hh_print_doc: int = 24
+    ttl_dynamodb_item_hh: int = 48
+    max_payload_size_bytes: int = 100 * 1024
+
+    # Logging
+    logging_enable_dev_server_logging: bool = False
+    logging_config_file: Path | None = None
+    logging_handlers_level: str | None = None
+
+    # OTEL
+    otel_sdk_disabled: bool = False
+    otel_enable_fastapi: bool = False
+    otel_enable_logging: bool = False
+    otel_enable_botocore: bool = False
+    otel_exporter_otlp_endpoint: str = "http://localhost:4317"
+    otel_exporter_otlp_insecure: bool = False
+    otel_exporter_otlp_headers: str = ""
+    otel_resource_attributes: str = ""
+    otel_python_excluded_urls: str = ""
+
+    @property
+    def moto_endpoint(self) -> str:
+        return f"http://{self.moto_host}:{self.moto_port}"
+
+    @property
+    def allowed_domains_pattern(self) -> str:
+        return f"({'|'.join(self.allowed_domains)})"
+
+    @field_validator("allowed_domains", mode="before")
+    @classmethod
+    def parse_comma_list(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, list):
+            return v
+        return [item.strip() for item in v.split(",")]
+
+
+@lru_cache
+def get_settings() -> Settings:  # pragma: no cover
+    return Settings()
+
+
+SettingsDep = Annotated[Settings, Depends(get_settings)]
+
+if get_settings().aws_local:
     os.environ["AWS_ACCESS_KEY_ID"] = "123"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "123"  # dummy key  # noqa: S105
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "123"  # noqa: S105

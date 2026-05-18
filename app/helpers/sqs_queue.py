@@ -1,112 +1,77 @@
 import json
 import logging
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from typing import Any
 
-import boto3
+import aioboto3
 from botocore.config import Config
 from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
-if TYPE_CHECKING:
-    from mypy_boto3_sqs import SQSClient
-
-from app.config.settings import (
-    AWS_CONNECT_TIMEOUT,
-    AWS_LOCAL,
-    AWS_READ_TIMEOUT,
-    AWS_REGION,
-    MOTO_ENDPOINT,
-    SQS_QUEUE_MAX_LENGTH,
-    SQS_QUEUE_NAME,
-)
+from app.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=1)
-def get_sqs_client() -> SQSClient:
-    """
-    Initializes and returns an SQS client object.
-
-    This function dynamically connects to either a local SQS instance
-    (via LocalStack for development) or to the AWS cloud-based service.
-    This behavior is controlled by the 'AWS_LOCAL' flag.
-
-    Returns:
-        SQSClient: A boto3 SQS client object.
-
-    Raises:
-        ClientError: If there is an issue connecting to the SQS endpoint,
-                     such as network problems or invalid credentials.
-    """
-    boto_config = Config(
-        connect_timeout=AWS_CONNECT_TIMEOUT,
-        read_timeout=AWS_READ_TIMEOUT,
+def _botocore_config() -> Config:
+    """Build a botocore Config with the configured connect/read timeouts."""
+    settings = get_settings()
+    return Config(
+        connect_timeout=settings.aws_connect_timeout, read_timeout=settings.aws_read_timeout
     )
-    try:
-        if AWS_LOCAL:
-            logger.info("Connecting to locally running SQS")
-            sqs = boto3.client(
-                "sqs",
-                endpoint_url=MOTO_ENDPOINT,
-                region_name=AWS_REGION,
-                config=boto_config,
-            )
-        else:
-            sqs = boto3.client("sqs", config=boto_config)
-    except ClientError:
-        logger.exception("Error connecting to SQS")
-        raise
-    else:
-        return sqs
 
 
-def is_queue_overloaded() -> bool:
-    """Returns True if the queue length exceeds SQS_QUEUE_MAX_LENGTH.
-
-    Uses ApproximateNumberOfMessages to determine the number of messages
-    in the queue.
-    """
-    sqs = get_sqs_client()
-    queue_url = sqs.get_queue_url(QueueName=SQS_QUEUE_NAME)["QueueUrl"]
-    response = sqs.get_queue_attributes(
-        QueueUrl=queue_url,
-        AttributeNames=["ApproximateNumberOfMessages"],
-    )
-    length = int(response["Attributes"]["ApproximateNumberOfMessages"])
-    logger.debug(
-        "SQS queue %s has %d messages (max: %d)", SQS_QUEUE_NAME, length, SQS_QUEUE_MAX_LENGTH
-    )
-    return length > SQS_QUEUE_MAX_LENGTH
+@asynccontextmanager
+async def _sqs_client(session: aioboto3.Session) -> AsyncGenerator[Any]:
+    settings = get_settings()
+    endpoint_url = settings.moto_endpoint if settings.aws_local else None
+    async with session.client(  # type: ignore[invalid-context-manager]
+        "sqs",
+        region_name=settings.aws_region,
+        endpoint_url=endpoint_url,
+        config=_botocore_config(),
+    ) as sqs:
+        yield sqs
 
 
-def send_to_queue(message: dict[str, Any]) -> None:
-    """
-    Sends a message to the SQS queue.
-
-    Serializes the given message dict to JSON and sends it to the
-    queue defined by SQS_QUEUE_NAME.
-
-    Args:
-        message: The message dict to send (typically the full DynamoDB item).
-
-    Raises:
-        ClientError: If there is an issue sending the message to SQS.
-    """
-    sqs = get_sqs_client()
-    try:
-        queue_url = sqs.get_queue_url(QueueName=SQS_QUEUE_NAME)["QueueUrl"]
-        sqs.send_message(
+async def is_queue_overloaded(session: aioboto3.Session) -> bool:
+    """Return True if the SQS approximate message count exceeds the configured maximum."""
+    settings = get_settings()
+    async with _sqs_client(session) as sqs:
+        queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
+        response = await sqs.get_queue_attributes(
             QueueUrl=queue_url,
-            MessageBody=json.dumps(message),
+            AttributeNames=["ApproximateNumberOfMessages"],
         )
-        logger.info("Message sent to SQS queue %s", SQS_QUEUE_NAME)
+        length = int(response["Attributes"]["ApproximateNumberOfMessages"])
+        logger.debug(
+            "SQS queue %s has %d messages (max: %d)",
+            settings.sqs_queue_name,
+            length,
+            settings.sqs_queue_max_length,
+        )
+        return length > settings.sqs_queue_max_length
+
+
+async def send_to_queue(message: dict[str, Any], session: aioboto3.Session) -> None:
+    """Serialize message to JSON and send it to the configured SQS queue."""
+    settings = get_settings()
+    try:
+        async with _sqs_client(session) as sqs:
+            queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
+            await sqs.send_message(
+                QueueUrl=queue_url,
+                MessageBody=json.dumps(message),
+            )
+            logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
     except ConnectTimeoutError:
-        logger.exception("Connection timeout sending message to SQS queue %s", SQS_QUEUE_NAME)
+        logger.exception(
+            "Connection timeout sending message to SQS queue %s", settings.sqs_queue_name
+        )
         raise
     except ReadTimeoutError:
-        logger.exception("Read timeout sending message to SQS queue %s", SQS_QUEUE_NAME)
+        logger.exception("Read timeout sending message to SQS queue %s", settings.sqs_queue_name)
         raise
     except ClientError:
-        logger.exception("Error sending message to SQS queue %s", SQS_QUEUE_NAME)
+        logger.exception("Error sending message to SQS queue %s", settings.sqs_queue_name)
         raise

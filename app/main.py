@@ -1,0 +1,113 @@
+import logging
+import logging.config
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from http import HTTPStatus
+
+import aioboto3
+import yaml
+
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.api.jobs import router as jobs_router
+from app.config.settings import get_settings
+from app.config.version import APP_VERSION
+from app.helpers.otel import initialize_instrumentation, shutdown_otel
+from app.schemas.checker import CheckerResponse
+from app.schemas.errors import ErrorDetail, ErrorResponse
+
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+if settings.logging_enable_dev_server_logging:  # pragma: no cover
+    if settings.logging_config_file:
+        logging.config.dictConfig(yaml.safe_load(settings.logging_config_file.read_text()))
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+if settings.logging_handlers_level is not None:  # pragma: no cover
+    for handler in logging.getLogger().handlers:
+        handler.setLevel(settings.logging_handlers_level)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    logger.info("Starting up service-print-api")
+
+    app.state.session = aioboto3.Session()
+    logger.info("aioboto3 session initialised")
+
+    yield
+
+    shutdown_otel()
+    logger.info("Shutdown complete")
+
+
+app = FastAPI(
+    title="service-print-api",
+    summary="Accepts print job requests and queues them for processing",
+    version=APP_VERSION,
+    contact={"name": "swissgeo", "url": "https://www.swissgeo.ch/infos"},
+    license_info={
+        "name": "BSD 3-Clause License",
+        "identifier": "BSD-3-Clause",
+    },
+    lifespan=lifespan,
+)
+
+# CORS — allow_origin_regex matches the full origin URL against the pattern.
+# For local dev ALLOWED_DOMAINS=.* expands to (.*) which matches any origin.
+# In production set ALLOWED_DOMAINS to hostname patterns, e.g. "example\.com,other\.ch".
+app.add_middleware(
+    CORSMiddleware,  # type: ignore[invalid-argument-type]
+    allow_origin_regex=settings.allowed_domains_pattern,
+    allow_methods=["GET", "HEAD", "OPTIONS", "POST"],
+    allow_headers=["*"],
+)
+
+initialize_instrumentation(app)
+
+app.include_router(jobs_router, prefix=settings.api_path_prefix)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/robots.txt", include_in_schema=False)
+async def _no_content() -> Response:
+    return Response(status_code=HTTPStatus.NO_CONTENT)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            error=ErrorDetail(code=exc.status_code, message=exc.detail)
+        ).model_dump(),
+    )
+
+
+@app.exception_handler(Exception)
+async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unhandled exception: %s", exc)
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        content=ErrorResponse(
+            error=ErrorDetail(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                message="Internal server error, please consult logs",
+            )
+        ).model_dump(),
+    )
+
+
+@app.get(
+    f"{settings.api_path_prefix}/checker",
+    response_model=CheckerResponse,
+    tags=["Internal"],
+    summary="Health check",
+)
+async def checker() -> CheckerResponse:
+    return CheckerResponse(success=True, message="OK", version=APP_VERSION)
