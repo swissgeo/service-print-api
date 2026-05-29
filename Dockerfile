@@ -3,7 +3,6 @@
 # It should only contain variables that don't change or change very infrequently
 # so that the cache is not needlessly invalidated
 FROM python:3.14-slim-trixie AS base
-ENV HTTP_PORT=8080
 ENV USER=swissgeo
 ENV GROUP=swissgeo
 ENV INSTALL_DIR=/opt/service-print-api
@@ -98,9 +97,10 @@ LABEL version=$VERSION
 WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
-EXPOSE ${HTTP_PORT}
+# expose the default port of uvicorn
+EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
 
 
 ###########################################################
@@ -135,6 +135,7 @@ LABEL version=$VERSION
 WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
-EXPOSE ${HTTP_PORT}
+# expose the default port of uvicorn
+EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]

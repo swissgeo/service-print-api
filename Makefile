@@ -6,7 +6,7 @@ SERVICE_NAME := service-print-api
 
 CURRENT_DIR := $(shell pwd)
 
-HTTP_PORT ?= 3000
+HTTP_PORT ?= 8000
 
 # Docker metadata
 GIT_HASH := $(shell git rev-parse HEAD)
@@ -109,7 +109,6 @@ dockerbuild:  $(LOGS_DIR) ## Create a docker image
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
 		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
 		--build-arg VERSION="$(GIT_TAG)" \
-		--build-arg HTTP_PORT="$(HTTP_PORT)" \
 		--build-arg AUTHOR="$(AUTHOR)" -t $(DOCKER_IMG_LOCAL_TAG) .
 
 
@@ -121,14 +120,14 @@ dockerpush: dockerbuild ## Push to the docker registry
 .PHONY: dockerrun
 dockerrun: start-moto dockerbuild ## Run the locally built docker image
 	docker run \
-		-it -p $(HTTP_PORT):8080 \
+		-it -p $(HTTP_PORT):$(HTTP_PORT) \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
 		--env LOGGING_CONFIG_FILE=$(CONTAINER_LOGGING_CONFIG) \
 		--network shared_network_local \
 		-e MOTO_HOST=moto-server \
 		-v $(PWD)/$(LOGGING_CONFIG_FILE):$(CONTAINER_LOGGING_CONFIG):ro \
-		$(DOCKER_IMG_LOCAL_TAG) --log-config $(CONTAINER_LOGGING_CONFIG)
+		$(DOCKER_IMG_LOCAL_TAG) --log-config $(CONTAINER_LOGGING_CONFIG) --port $(HTTP_PORT)
 
 
 .PHONY: lint
