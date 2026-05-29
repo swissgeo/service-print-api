@@ -5,20 +5,12 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import aioboto3
-from botocore.config import Config
 from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
+from app.core.aws import botocore_config
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
-
-
-def _botocore_config() -> Config:
-    """Build a botocore Config with the configured connect/read timeouts."""
-    settings = get_settings()
-    return Config(
-        connect_timeout=settings.aws_connect_timeout, read_timeout=settings.aws_read_timeout
-    )
 
 
 @asynccontextmanager
@@ -29,7 +21,7 @@ async def _sqs_client(session: aioboto3.Session) -> AsyncGenerator[Any]:
         "sqs",
         region_name=settings.aws_region,
         endpoint_url=endpoint_url,
-        config=_botocore_config(),
+        config=botocore_config(),
     ) as sqs:
         yield sqs
 
