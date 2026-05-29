@@ -43,6 +43,8 @@ def _to_job_response(item: DBJobItem) -> JobResponse:
     "/jobs",
     response_model=JobResponse,
     status_code=202,
+    tags=["Jobs"],
+    summary="Submit a new print job",
     responses={
         200: {"model": JobResponse},
         400: {"model": ErrorResponse},
@@ -121,6 +123,8 @@ async def start_print(
     "/jobs",
     response_model=ErrorResponse,
     status_code=501,
+    tags=["Jobs"],
+    summary="List print jobs (not implemented)",
 )
 async def print_list() -> None:
     raise HTTPException(status_code=501, detail="Print job listing has not been implemented")
@@ -129,6 +133,8 @@ async def print_list() -> None:
 @router.get(
     "/jobs/{job_id}",
     response_model=JobResponse,
+    tags=["Jobs"],
+    summary="Get the status of a print job",
     responses={
         404: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
