@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 
 app = FastAPI(
-    title="service-print-api",
+    title="Service Print API",
     summary="Accepts print job requests and queues them for processing",
     version=APP_VERSION,
     contact={"name": "swissgeo", "url": "https://www.swissgeo.ch/infos"},
