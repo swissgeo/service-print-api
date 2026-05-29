@@ -82,7 +82,7 @@ ENV PYTHONHOME=""
 
 # Overwrite the version.py from source with the actual version
 ARG VERSION=unknown
-RUN echo "APP_VERSION = '$VERSION'" > ${INSTALL_DIR}/app/version.py
+RUN echo "__version__ = '$VERSION'" > ${INSTALL_DIR}/app/version.py
 
 ARG GIT_HASH=unknown
 ARG GIT_BRANCH=unknown
@@ -120,7 +120,7 @@ ENV PYTHONHOME=""
 
 # Overwrite the version.py from source with the actual version
 ARG VERSION=unknown
-RUN echo "APP_VERSION = '$VERSION'" > ${INSTALL_DIR}/app/version.py
+RUN echo "__version__ = '$VERSION'" > ${INSTALL_DIR}/app/version.py
 
 ARG GIT_HASH=unknown
 ARG GIT_BRANCH=unknown

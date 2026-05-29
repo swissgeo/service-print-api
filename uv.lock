@@ -2047,7 +2047,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "debugpy" },
-    { name = "httpx", specifier = "~=0.28.1" },
+    { name = "httpx", specifier = "~=0.28" },
     { name = "moto", extras = ["dynamodb", "sqs", "server"], specifier = "~=5.1" },
     { name = "pytest", specifier = "~=9.0" },
     { name = "pytest-asyncio", specifier = "~=1.3" },

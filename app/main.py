@@ -16,7 +16,7 @@ from app.otel import initialize_instrumentation, shutdown_otel
 from app.schemas.checker import CheckerResponse
 from app.schemas.errors import ErrorDetail, ErrorResponse
 from app.settings import get_settings
-from app.version import APP_VERSION
+from app.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 app = FastAPI(
     title="Service Print API",
     summary="Accepts print job requests and queues them for processing",
-    version=APP_VERSION,
+    version=__version__,
     contact={"name": "swissgeo", "url": "https://www.swissgeo.ch/infos"},
     license_info={
         "name": "BSD 3-Clause License",
@@ -110,4 +110,4 @@ async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
     summary="Health check",
 )
 async def checker() -> CheckerResponse:
-    return CheckerResponse(success=True, message="OK", version=APP_VERSION)
+    return CheckerResponse(success=True, message="OK", version=__version__)

@@ -1,1 +1,1 @@
-APP_VERSION = "Is being set when building the docker image"
+__version__ = "Is being set when building the docker image"
