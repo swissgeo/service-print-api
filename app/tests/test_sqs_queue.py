@@ -5,8 +5,8 @@ from botocore.exceptions import ClientError
 
 import pytest
 
-from app.config.settings import get_settings
-from app.helpers.sqs_queue import is_queue_overloaded, send_to_queue
+from app.core.sqs_queue import is_queue_overloaded, send_to_queue
+from app.settings import get_settings
 
 SQS_QUEUE_MAX_LENGTH = get_settings().sqs_queue_max_length
 

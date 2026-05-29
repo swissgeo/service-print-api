@@ -46,6 +46,7 @@ export UV_ENV_FILE := $(ENV_FILE)
 
 # Logging
 LOGS_DIR = $(PWD)/logs
+CONTAINER_LOGGING_CONFIG := /opt/service-print-api/logging-config.yaml
 
 .env:
 	cp .env.default .env
@@ -123,9 +124,11 @@ dockerrun: start-moto dockerbuild ## Run the locally built docker image
 		-it -p $(HTTP_PORT):8080 \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
+		--env LOGGING_CONFIG_FILE=$(CONTAINER_LOGGING_CONFIG) \
 		--network shared_network_local \
 		-e MOTO_HOST=moto-server \
-		$(DOCKER_IMG_LOCAL_TAG)
+		-v $(PWD)/$(LOGGING_CONFIG_FILE):$(CONTAINER_LOGGING_CONFIG):ro \
+		$(DOCKER_IMG_LOCAL_TAG) --log-config $(CONTAINER_LOGGING_CONFIG)
 
 
 .PHONY: lint

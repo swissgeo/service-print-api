@@ -1,4 +1,4 @@
-from app.config.settings import get_settings
+from app.settings import get_settings
 
 API_PATH_PREFIX = get_settings().api_path_prefix
 

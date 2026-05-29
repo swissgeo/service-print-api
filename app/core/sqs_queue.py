@@ -8,7 +8,7 @@ import aioboto3
 from botocore.config import Config
 from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
-from app.config.settings import get_settings
+from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
 

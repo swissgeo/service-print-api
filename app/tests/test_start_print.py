@@ -4,8 +4,8 @@ from botocore.exceptions import ClientError
 
 import pytest
 
-from app.config.settings import get_settings
 from app.schemas.jobs import DBJobItem
+from app.settings import get_settings
 
 API_PATH_PREFIX = get_settings().api_path_prefix
 

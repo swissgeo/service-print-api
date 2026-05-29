@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 
 import pytest
 
-from app.helpers.dynamo_db import get_print_job, insert_dynamodb
+from app.core.dynamo_db import get_print_job, insert_dynamodb
 
 _JOB_ID = "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c"
 

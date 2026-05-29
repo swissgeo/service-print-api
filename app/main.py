@@ -12,11 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.jobs import router as jobs_router
-from app.config.settings import get_settings
-from app.config.version import APP_VERSION
-from app.helpers.otel import initialize_instrumentation, shutdown_otel
+from app.otel import initialize_instrumentation, shutdown_otel
 from app.schemas.checker import CheckerResponse
 from app.schemas.errors import ErrorDetail, ErrorResponse
+from app.settings import get_settings
+from app.version import APP_VERSION
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.helpers.utils import (
+from app.core.utils import (
     dict_to_sha256_hash,
     get_hours_difference,
     get_ttl_timestamp,
@@ -54,7 +54,7 @@ class TestGetTtlTimestamp:
         result = get_ttl_timestamp()
         assert result > now
 
-    @patch("app.helpers.utils.datetime")
+    @patch("app.core.utils.datetime")
     def test_ttl_matches_configured_hours(self, mock_datetime):
         import datetime as dt  # noqa: PLC0415
 
