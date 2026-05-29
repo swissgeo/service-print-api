@@ -527,15 +527,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ecs-logging"
-version = "2.3.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/9e/ea78919dd88d06a4bf622717e0127c763d3017bdb550e42d9f4b3e4007b1/ecs_logging-2.3.0.tar.gz", hash = "sha256:be7f618e71e10c33a61165aea58813ebd702f6c0044538155871cb9a1609ab4e", size = 11498, upload-time = "2026-01-19T10:28:29.032Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/6f/187826c34511e73c7b9f9595465fd8a029ed467c8c2e57ef76f7dbc8a810/ecs_logging-2.3.0-py3-none-any.whl", hash = "sha256:42da72191a98bd724d105e126ca8d7c81fc82b0d7bbbe4bb1584c34e61042cfc", size = 14791, upload-time = "2026-01-19T10:28:27.408Z" },
-]
-
-[[package]]
 name = "email-validator"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -986,15 +977,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/12/ac/34cbfb433a10e28c7fd830f91c5a348462ba748413cbb950c7f259e67aa7/lazy_object_proxy-1.12.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:0a83c6f7a6b2bfc11ef3ed67f8cbe99f8ff500b05655d8e7df9aab993a6abc95", size = 69529, upload-time = "2025-08-22T13:49:55.29Z" },
     { url = "https://files.pythonhosted.org/packages/6f/6a/11ad7e349307c3ca4c0175db7a77d60ce42a41c60bcb11800aabd6a8acb8/lazy_object_proxy-1.12.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:256262384ebd2a77b023ad02fbcc9326282bcfd16484d5531154b02bc304f4c5", size = 70391, upload-time = "2025-08-22T13:49:56.35Z" },
     { url = "https://files.pythonhosted.org/packages/59/97/9b410ed8fbc6e79c1ee8b13f8777a80137d4bc189caf2c6202358e66192c/lazy_object_proxy-1.12.0-cp314-cp314-win_amd64.whl", hash = "sha256:7601ec171c7e8584f8ff3f4e440aa2eebf93e854f04639263875b8c2971f819f", size = 26988, upload-time = "2025-08-22T13:49:57.302Z" },
-]
-
-[[package]]
-name = "logging-utilities"
-version = "5.4.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/dd/8d/5704ca2b246c9692e5189a6ccccf8ec76b6cfca10385905ecb70132d9e3e/logging_utilities-5.4.1.tar.gz", hash = "sha256:1c26cadfd7b7e8320d7fcade91234bad2a1787f861b2141e8e92c52e6b07501b", size = 69727, upload-time = "2026-04-21T06:06:38.654Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/c3/6c70fd6ea2b056061034d0a61813d8f8e8a401322df2514357380f9302fb/logging_utilities-5.4.1-py3-none-any.whl", hash = "sha256:de9619fc30aee332f8bcf8bbb5de12cc064285e3467e3384d275cb5e2c5b4e90", size = 34925, upload-time = "2026-04-21T06:06:37.13Z" },
 ]
 
 [[package]]
@@ -2016,9 +1998,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aioboto3" },
-    { name = "ecs-logging" },
     { name = "fastapi", extra = ["standard"] },
-    { name = "logging-utilities" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-asgi" },
     { name = "opentelemetry-instrumentation-botocore" },
