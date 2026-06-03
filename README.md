@@ -2,8 +2,8 @@
 
 | Branch | Status |
 |--------|-----------|
-| develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiNXRGbGtlM2FoVXVNTElKVmRybVB4QTdab2dzUi9sUzN5ZGJ2eU1XeVY3Qjc0bFRJbDhVWkZPK2M1ZVZpQ3RZMDdRbDNBM2tMZmJXUG5VcjF4QnBJdmo4PSIsIml2UGFyYW1ldGVyU3BlYyI6IlNTbndCOTdHVDVxaEQ0MlAiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) |
-| main | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiNXRGbGtlM2FoVXVNTElKVmRybVB4QTdab2dzUi9sUzN5ZGJ2eU1XeVY3Qjc0bFRJbDhVWkZPK2M1ZVZpQ3RZMDdRbDNBM2tMZmJXUG5VcjF4QnBJdmo4PSIsIml2UGFyYW1ldGVyU3BlYyI6IlNTbndCOTdHVDVxaEQ0MlAiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main) |
+| develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiNXRGbGtlM2FoVXVNTElKVmRybVB4QTdab2dzUi9sUzN5ZGJ2eU1XeVY3Qjc0bFRJbDhVWkZPK2M1ZVZpQ3RZMDdRbDNBM2tMZmJXUG5VcjF4QnBJdmo4PSIsIml2UGFyYW1ldGVyU3BlYyI6IlNTbndCOTdHVDVxaEQ0MlAiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) [![codecov-develop](https://codecov.io/gh/swissgeo/service-print-api/branch/develop/graph/badge.svg)](https://codecov.io/gh/swissgeo/service-print-api) |
+| main | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiNXRGbGtlM2FoVXVNTElKVmRybVB4QTdab2dzUi9sUzN5ZGJ2eU1XeVY3Qjc0bFRJbDhVWkZPK2M1ZVZpQ3RZMDdRbDNBM2tMZmJXUG5VcjF4QnBJdmo4PSIsIml2UGFyYW1ldGVyU3BlYyI6IlNTbndCOTdHVDVxaEQ0MlAiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main) [![codecov-main](https://codecov.io/gh/swissgeo/service-print-api/branch/main/graph/badge.svg)](https://codecov.io/gh/swissgeo/service-print-api) |
 
 ## Table of Content
 
