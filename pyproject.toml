@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "Flask~=3.1",
     "ecs-logging~=2.2",
-    "gevent~=25.4",
+    "gevent~=26.5",
     "gunicorn~=25.0",
     "logging-utilities~=5.3",
     "pyyaml~=6.0",
