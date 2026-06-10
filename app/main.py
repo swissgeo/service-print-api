@@ -3,6 +3,7 @@ import logging.config
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from http import HTTPStatus
+from typing import Any
 
 import aioboto3
 import yaml
@@ -10,6 +11,7 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from app.api.jobs import router as jobs_router
@@ -32,6 +34,32 @@ if settings.logging_enable_dev_server_logging:  # pragma: no cover
 if settings.logging_handlers_level is not None:  # pragma: no cover
     for handler in logging.getLogger().handlers:
         handler.setLevel(settings.logging_handlers_level)
+
+
+def _customize_openapi(app: FastAPI) -> None:
+    """Remove the 422 responses FastAPI adds by default — they are replaced by 400."""
+
+    def custom_openapi() -> dict[str, Any]:
+        if app.openapi_schema:
+            return app.openapi_schema  # pragma: no cover
+        app.openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            openapi_version=app.openapi_version,
+            description=app.description,
+            terms_of_service=app.terms_of_service,
+            contact=app.contact,
+            license_info=app.license_info,
+            routes=app.routes,
+            tags=app.openapi_tags,
+            servers=app.servers,
+        )
+        for method_item in app.openapi_schema.get("paths", {}).values():
+            for param in method_item.values():
+                param.get("responses", {}).pop("422", None)
+        return app.openapi_schema
+
+    app.openapi = custom_openapi  # ty:ignore[invalid-assignment]
 
 
 @asynccontextmanager
@@ -85,8 +113,8 @@ async def validation_exception_handler(
     _request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     return JSONResponse(
-        status_code=422,
-        content=ErrorResponse(error=ErrorDetail(code=422, message=str(exc))).model_dump(),
+        status_code=400,
+        content=ErrorResponse(error=ErrorDetail(code=400, message=str(exc))).model_dump(),
     )
 
 
@@ -112,6 +140,9 @@ async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
             )
         ).model_dump(),
     )
+
+
+_customize_openapi(app)
 
 
 @app.get(

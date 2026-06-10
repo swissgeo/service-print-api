@@ -53,14 +53,14 @@ class TestStartPrint:
 
         assert response.status_code == 503
 
-    async def test_invalid_payload_returns_422(self, client):
+    async def test_invalid_payload_returns_400(self, client):
         response = await client.post(
             f"{API_PATH_PREFIX}/jobs",
             content=b"null",
             headers={"Content-Type": "application/json"},
         )
 
-        assert response.status_code == 422
+        assert response.status_code == 400
         assert "error" in response.json()
 
     async def test_existing_non_expired_job_returns_200(self, client):
