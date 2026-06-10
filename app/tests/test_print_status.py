@@ -20,7 +20,7 @@ class TestPrintStatus:
                 "created_timestamp_iso_8601": "2026-11-26T10:00:00+00:00",
                 "started_timestamp_iso_8601": "2026-11-26T10:01:00+00:00",
                 "finished_timestamp_iso_8601": "2026-11-26T10:05:00+00:00",
-                "pdf_path": f"https://download.swissgeo.ch/{_JOB_ID}.pdf",
+                "pdf_path": f"{API_PATH_PREFIX}/results/{_JOB_ID}.pdf",
                 "message": "Print completed",
             }
         )
@@ -31,7 +31,7 @@ class TestPrintStatus:
         data = response.json()
         assert data["status"] == "done"
         assert data["reportPath"] == f"{API_PATH_PREFIX}/jobs/{_JOB_ID}"
-        assert data["pdfPath"] == f"https://download.swissgeo.ch/{_JOB_ID}.pdf"
+        assert data["pdfPath"] == f"{API_PATH_PREFIX}/results/{_JOB_ID}.pdf"
         assert data["message"] == "Print completed"
 
     async def test_job_found_with_missing_optional_attrs(self, client):
