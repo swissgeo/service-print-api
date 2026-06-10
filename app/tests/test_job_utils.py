@@ -101,5 +101,3 @@ class TestGetHoursDifference:
     def test_invalid_format_raises(self):
         with pytest.raises(ValueError, match="Invalid date format"):
             get_hours_difference("not-a-date", "2023-10-27T10:00:00+00:00")
-
-

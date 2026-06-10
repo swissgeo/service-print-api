@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 from botocore.exceptions import ClientError
 
-import pytest
-
 from pydantic import ValidationError
+
+import pytest
 
 from app.schemas.jobs import DBJobItem, PrintJobPayload
 from app.settings import get_settings

@@ -86,9 +86,7 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     return JSONResponse(
         status_code=422,
-        content=ErrorResponse(
-            error=ErrorDetail(code=422, message=str(exc))
-        ).model_dump(),
+        content=ErrorResponse(error=ErrorDetail(code=422, message=str(exc))).model_dump(),
     )
 
 

@@ -101,9 +101,7 @@ async def start_print(
 
     if await is_queue_overloaded(session):
         logger.warning("SQS queue is overloaded, rejecting new print job")
-        raise HTTPException(
-            status_code=503, detail="Service overloaded, please try again later"
-        )
+        raise HTTPException(status_code=503, detail="Service overloaded, please try again later")
 
     created_ts = datetime.now(UTC)
     item: dict[str, Any] = {
@@ -118,17 +116,13 @@ async def start_print(
         await insert_dynamodb(item, session)
     except ClientError:
         logger.exception("Error inserting item into DynamoDB")
-        raise HTTPException(
-            status_code=500, detail="Error storing print job in database"
-        ) from None
+        raise HTTPException(status_code=500, detail="Error storing print job in database") from None
 
     try:
         await send_to_queue(item, session)
     except ClientError:
         logger.exception("Error sending item to SQS queue")
-        raise HTTPException(
-            status_code=500, detail="Error sending print job to queue"
-        ) from None
+        raise HTTPException(status_code=500, detail="Error sending print job to queue") from None
 
     return JobResponse(
         status=JobStatus.OPEN,
