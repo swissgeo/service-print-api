@@ -1,3 +1,7 @@
+import os
+
+os.environ["OTEL_SDK_DISABLED"] = "true"  # must be set before app.otel is imported
+
 from unittest.mock import MagicMock
 
 from httpx import ASGITransport, AsyncClient

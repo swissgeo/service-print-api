@@ -124,8 +124,16 @@ def _setup_metrics(exporters: list[MetricExporter]) -> MeterProvider | None:
 
 
 # ---------------------------------------------------------------------------
-# Import-time setup.
-# No lazy imports needed — uvicorn has no monkey-patching constraints.
+# NOTE: Import-time setup is intentional.
+#
+# This allows uvicorn's logging.dictConfig() to resolve:
+#
+#   handlers:
+#     otel:
+#       (): app.otel.get_otel_handler
+#
+# At that point, get_otel_handler() must be importable and must already have
+# access to an initialized LoggerProvider.
 # ---------------------------------------------------------------------------
 log_provider, trace_provider = _get_providers()
 log_exporters, span_exporters, metric_exporters = _get_exporters()
