@@ -26,8 +26,9 @@ def dict_to_sha256_hash(data: dict[str, object]) -> str:
 
 
 def get_ttl_timestamp() -> int:
+    settings = get_settings()
     now_utc = datetime.now(UTC)
-    return int((now_utc + timedelta(hours=get_settings().ttl_dynamodb_item_hh)).timestamp())
+    return int((now_utc + timedelta(hours=settings.ttl_dynamodb_item_hh)).timestamp())
 
 
 def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
@@ -42,9 +43,10 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
 
 def _to_job_response(item: DBJobItem) -> JobResponse:
     """Build a JobResponse from a DBJobItem."""
+    settings = get_settings()
     return JobResponse(
         status=item.status,
-        reportPath=f"{get_settings().api_path_prefix}/jobs/{item.job_id}",
+        reportPath=f"{settings.api_path_prefix}/jobs/{item.job_id}",
         created=item.created_timestamp_iso_8601,
         started=item.started_timestamp_iso_8601,
         finished=item.finished_timestamp_iso_8601,
@@ -71,14 +73,17 @@ async def start_print(
     response: Response,
     payload: PrintJobPayload,
 ) -> JobResponse:
+    settings = get_settings()
     payload_dict = payload.model_dump()
 
     payload_size = len(json.dumps(payload_dict, separators=(",", ":")).encode())
-    max_size = get_settings().max_payload_size_bytes
-    if payload_size > max_size:
+    if payload_size > settings.max_payload_size_bytes:
         raise HTTPException(
             status_code=400,
-            detail=f"Payload size {payload_size} bytes exceeds limit of {max_size} bytes",
+            detail=(
+                f"Payload size {payload_size} bytes exceeds"
+                f" limit of {settings.max_payload_size_bytes} bytes"
+            ),
         )
 
     job_id = dict_to_sha256_hash(payload_dict)
@@ -93,7 +98,7 @@ async def start_print(
         now = datetime.now(UTC).isoformat()
         if (
             get_hours_difference(existing.created_timestamp_iso_8601.isoformat(), now)
-            < get_settings().expiration_time_hh_print_doc
+            < settings.expiration_time_hh_print_doc
         ):
             logger.info("Returning already registered print request")
             response.status_code = 200
@@ -126,7 +131,7 @@ async def start_print(
 
     return JobResponse(
         status=JobStatus.OPEN,
-        reportPath=f"{get_settings().api_path_prefix}/jobs/{job_id}",
+        reportPath=f"{settings.api_path_prefix}/jobs/{job_id}",
         created=created_ts,
     )
 
