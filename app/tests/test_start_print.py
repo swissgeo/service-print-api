@@ -218,6 +218,16 @@ class TestPrintJobPayload:
         with pytest.raises(ValidationError, match="print_resolution"):
             PrintJobPayload(**{**_PAYLOAD, "print_resolution": "high"})
 
+    def test_state_within_limit_is_valid(self):
+        max_len = get_settings().max_character_size_of_state
+        payload = PrintJobPayload(**{**_PAYLOAD, "state": "a" * max_len})
+        assert len(payload.state) == max_len
+
+    def test_state_exceeding_limit_raises(self):
+        max_len = get_settings().max_character_size_of_state
+        with pytest.raises(ValidationError, match="State must not exceed"):
+            PrintJobPayload(**{**_PAYLOAD, "state": "a" * (max_len + 1)})
+
     @pytest.mark.parametrize("resolution", [72, 96, 150, 300])
     def test_valid_resolutions(self, resolution):
         payload = PrintJobPayload(**{**_PAYLOAD, "print_resolution": resolution})

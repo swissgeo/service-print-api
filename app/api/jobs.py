@@ -75,17 +75,6 @@ async def start_print(
 ) -> JobResponse:
     settings = get_settings()
     payload_dict = payload.model_dump()
-
-    payload_size = len(json.dumps(payload_dict, separators=(",", ":")).encode())
-    if payload_size > settings.max_payload_size_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Payload size {payload_size} bytes exceeds"
-                f" limit of {settings.max_payload_size_bytes} bytes"
-            ),
-        )
-
     job_id = dict_to_sha256_hash(payload_dict)
 
     try:

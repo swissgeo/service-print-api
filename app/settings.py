@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     # Job behaviour
     expiration_time_hh_print_doc: int = 24
     ttl_dynamodb_item_hh: int = 48
-    max_payload_size_bytes: int = 100 * 1024
+    max_character_size_of_state: int = 1000
 
     # Logging
     logging_enable_dev_server_logging: bool = False
