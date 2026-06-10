@@ -17,9 +17,6 @@ GIT_TAG := $(shell git describe --tags || echo "no version info")
 AUTHOR := $(USER)
 
 
-# Flask specific
-APP_SRC_DIR := app
-
 # Commands
 UV_RUN := uv run
 PYTHON := $(UV_RUN) python3
