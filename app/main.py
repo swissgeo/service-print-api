@@ -8,6 +8,7 @@ import aioboto3
 import yaml
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -77,6 +78,18 @@ app.include_router(jobs_router, prefix=settings.api_path_prefix)
 @app.get("/robots.txt", include_in_schema=False)
 async def _no_content() -> Response:
     return Response(status_code=HTTPStatus.NO_CONTENT)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content=ErrorResponse(
+            error=ErrorDetail(code=422, message=str(exc))
+        ).model_dump(),
+    )
 
 
 @app.exception_handler(HTTPException)

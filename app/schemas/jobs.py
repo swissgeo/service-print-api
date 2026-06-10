@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -9,6 +9,16 @@ class JobStatus(StrEnum):
     DONE = "done"
     FINISHED = "finished"
     ERROR = "error"
+
+
+class PrintJobPayload(BaseModel):
+    """Body accepted by POST /jobs."""
+
+    print_format: Literal["a0", "a1", "a2", "a3", "a4", "a5", "a6"]
+    print_orientation: Literal["portrait", "landscape"]
+    print_resolution: int = Field(ge=72, le=300)
+    print_scale: int | None = Field(default=None, ge=1, le=5_000_000)
+    state: str
 
 
 class JobResponse(BaseModel):

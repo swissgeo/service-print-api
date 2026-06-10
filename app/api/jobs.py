@@ -1,10 +1,10 @@
 import logging
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Any
 
 from botocore.exceptions import ClientError
 
-from fastapi import APIRouter, Body, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response
 
 from app.core.dynamo_db import get_print_job, insert_dynamodb
 from app.core.sqs_queue import is_queue_overloaded, send_to_queue
@@ -16,7 +16,7 @@ from app.core.utils import (
 )
 from app.dependencies import SessionDep
 from app.schemas.errors import ErrorResponse
-from app.schemas.jobs import DBJobItem, JobResponse, JobStatus
+from app.schemas.jobs import DBJobItem, JobResponse, JobStatus, PrintJobPayload
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -53,14 +53,16 @@ def _to_job_response(item: DBJobItem) -> JobResponse:
 async def start_print(
     session: SessionDep,
     response: Response,
-    payload: Annotated[Any, Body()] = None,
+    payload: PrintJobPayload,
 ) -> JobResponse:
+    payload_dict = payload.model_dump()
+
     try:
-        validate_payload(payload)
+        validate_payload(payload_dict)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 
-    job_id = dict_to_sha256_hash(payload)
+    job_id = dict_to_sha256_hash(payload_dict)
 
     try:
         existing = await get_print_job(job_id, session)
@@ -89,7 +91,7 @@ async def start_print(
         "job_id": job_id,
         "created_timestamp_iso_8601": created_ts.isoformat(),
         "ttl": get_ttl_timestamp(),
-        "payload": payload,
+        "payload": payload_dict,
         "status": JobStatus.OPEN,
     }
 

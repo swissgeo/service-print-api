@@ -4,21 +4,22 @@ from botocore.exceptions import ClientError
 
 import pytest
 
-from app.schemas.jobs import DBJobItem
+from pydantic import ValidationError
+
+from app.schemas.jobs import DBJobItem, PrintJobPayload
 from app.settings import get_settings
 
 API_PATH_PREFIX = get_settings().api_path_prefix
 
 _PAYLOAD = {
-    "format": "a4",
-    "orientation": "landscape",
-    "resolution": 96,
-    "scale": 25000,
-    "view": "print_map",
-    "query": "key=value",
+    "print_format": "a4",
+    "print_orientation": "landscape",
+    "print_resolution": 96,
+    "print_scale": 25000,
+    "state": "cHJpbnRfbWFw",
 }
 
-_JOB_ID = "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c"
+_JOB_ID = "684394c1bef082925d690f05f75b3e248b6a56327229475985891fee84564d75"
 
 
 @pytest.fixture(autouse=True)
@@ -52,14 +53,14 @@ class TestStartPrint:
 
         assert response.status_code == 503
 
-    async def test_invalid_payload_returns_400(self, client):
+    async def test_invalid_payload_returns_422(self, client):
         response = await client.post(
             f"{API_PATH_PREFIX}/jobs",
             content=b"null",
             headers={"Content-Type": "application/json"},
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 422
         assert "error" in response.json()
 
     async def test_existing_non_expired_job_returns_200(self, client):
@@ -173,3 +174,66 @@ class TestStartPrint:
         assert response.status_code == 202
         mock_insert.assert_called_once()
         mock_send.assert_called_once()
+
+
+class TestPrintJobPayload:
+    def test_valid_full_payload(self):
+        payload = PrintJobPayload(**_PAYLOAD)
+        assert payload.print_format == "a4"
+        assert payload.print_scale == 25000
+
+    def test_print_scale_is_optional(self):
+        payload = PrintJobPayload(
+            print_format="a4",
+            print_orientation="portrait",
+            print_resolution=96,
+            state="cHJpbnRfbWFw",
+        )
+        assert payload.print_scale is None
+
+    @pytest.mark.parametrize("fmt", ["a0", "a1", "a2", "a3", "a4", "a5", "a6"])
+    def test_all_valid_formats(self, fmt):
+        payload = PrintJobPayload(**{**_PAYLOAD, "print_format": fmt})
+        assert payload.print_format == fmt
+
+    @pytest.mark.parametrize("orientation", ["portrait", "landscape"])
+    def test_all_valid_orientations(self, orientation):
+        payload = PrintJobPayload(**{**_PAYLOAD, "print_orientation": orientation})
+        assert payload.print_orientation == orientation
+
+    def test_invalid_format_raises(self):
+        with pytest.raises(ValidationError, match="print_format"):
+            PrintJobPayload(**{**_PAYLOAD, "print_format": "b2"})
+
+    def test_invalid_orientation_raises(self):
+        with pytest.raises(ValidationError, match="print_orientation"):
+            PrintJobPayload(**{**_PAYLOAD, "print_orientation": "diagonal"})
+
+    def test_missing_required_field_raises(self):
+        data = {k: v for k, v in _PAYLOAD.items() if k != "print_format"}
+        with pytest.raises(ValidationError, match="print_format"):
+            PrintJobPayload(**data)
+
+    def test_wrong_type_for_resolution_raises(self):
+        with pytest.raises(ValidationError, match="print_resolution"):
+            PrintJobPayload(**{**_PAYLOAD, "print_resolution": "high"})
+
+    @pytest.mark.parametrize("resolution", [72, 96, 150, 300])
+    def test_valid_resolutions(self, resolution):
+        payload = PrintJobPayload(**{**_PAYLOAD, "print_resolution": resolution})
+        assert payload.print_resolution == resolution
+
+    @pytest.mark.parametrize("resolution", [71, 301])
+    def test_out_of_range_resolution_raises(self, resolution):
+        with pytest.raises(ValidationError, match="print_resolution"):
+            PrintJobPayload(**{**_PAYLOAD, "print_resolution": resolution})
+
+    @pytest.mark.parametrize("scale", [1, 25000, 5_000_000])
+    def test_valid_scales(self, scale):
+        payload = PrintJobPayload(**{**_PAYLOAD, "print_scale": scale})
+        assert payload.print_scale == scale
+
+    @pytest.mark.parametrize("scale", [0, 5_000_001])
+    def test_out_of_range_scale_raises(self, scale):
+        with pytest.raises(ValidationError, match="print_scale"):
+            PrintJobPayload(**{**_PAYLOAD, "print_scale": scale})
