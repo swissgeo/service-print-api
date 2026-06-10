@@ -1,5 +1,4 @@
 import os
-from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
@@ -7,12 +6,7 @@ from typing import Annotated
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastapi import Depends
-from pydantic import field_validator, model_validator
-
-
-class Exporter(StrEnum):
-    OTLP = "otlp"
-    CONSOLE = "console"
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -63,16 +57,12 @@ class Settings(BaseSettings):
     otel_enable_fastapi: bool = False
     otel_enable_boto: bool = False
     otel_enable_otlp_exporter: bool = True
-    otel_enable_console_exporter: bool = False
     otel_enable_metrics: bool = False
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
     otel_exporter_otlp_insecure: bool = False
     otel_exporter_otlp_headers: str = ""
     otel_resource_attributes: str = ""
     otel_python_excluded_urls: str = ""
-    otel_trace_exporters: list[Exporter] = [Exporter.OTLP]
-    otel_metrics_exporters: list[Exporter] = [Exporter.OTLP]
-    otel_logging_exporters: list[Exporter] = [Exporter.OTLP]
 
     @property
     def moto_endpoint(self) -> str:
@@ -82,36 +72,12 @@ class Settings(BaseSettings):
     def allowed_domains_pattern(self) -> str:
         return f"({'|'.join(self.allowed_domains)})"
 
-    @field_validator(
-        "allowed_domains",
-        "otel_trace_exporters",
-        "otel_metrics_exporters",
-        "otel_logging_exporters",
-        mode="before",
-    )
+    @field_validator("allowed_domains", mode="before")
     @classmethod
     def parse_comma_list(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, list):
             return v
         return [item.strip() for item in v.split(",")]
-
-    @model_validator(mode="after")
-    def validate_otel_exporters(self) -> Settings:
-        for field_name in (
-            "otel_trace_exporters",
-            "otel_metrics_exporters",
-            "otel_logging_exporters",
-        ):
-            exporters = getattr(self, field_name)
-            if Exporter.OTLP in exporters and not self.otel_enable_otlp_exporter:
-                raise ValueError(
-                    f"{field_name} contains 'otlp' but otel_enable_otlp_exporter is false."
-                )
-            if Exporter.CONSOLE in exporters and not self.otel_enable_console_exporter:
-                raise ValueError(
-                    f"{field_name} contains 'console' but otel_enable_console_exporter is false."
-                )
-        return self
 
 
 @lru_cache
