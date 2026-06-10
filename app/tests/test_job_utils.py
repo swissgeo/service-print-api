@@ -3,12 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.core.utils import (
-    dict_to_sha256_hash,
-    get_hours_difference,
-    get_ttl_timestamp,
-    validate_payload,
-)
+from app.api.jobs import dict_to_sha256_hash, get_hours_difference, get_ttl_timestamp
 
 
 class TestDictToSha256Hash:
@@ -54,14 +49,12 @@ class TestGetTtlTimestamp:
         result = get_ttl_timestamp()
         assert result > now
 
-    @patch("app.core.utils.datetime")
+    @patch("app.api.jobs.datetime")
     def test_ttl_matches_configured_hours(self, mock_datetime):
         import datetime as dt  # noqa: PLC0415
 
         fixed = dt.datetime(2024, 1, 15, 12, 0, 0, tzinfo=dt.UTC)
-        mock_datetime.datetime.now.return_value = fixed
-        mock_datetime.UTC = dt.UTC
-        mock_datetime.timedelta = dt.timedelta
+        mock_datetime.now.return_value = fixed
         expected = fixed + dt.timedelta(hours=48)
 
         result = get_ttl_timestamp()
@@ -110,18 +103,3 @@ class TestGetHoursDifference:
             get_hours_difference("not-a-date", "2023-10-27T10:00:00+00:00")
 
 
-class TestValidatePayload:
-    def test_none_raises(self):
-        with pytest.raises(ValueError, match="Payload must not be None"):
-            validate_payload(None)
-
-    def test_valid_payload(self):
-        validate_payload({"key": "value"})
-
-    def test_oversized_payload_raises(self):
-        large = {"data": "x" * 200_000}
-        with pytest.raises(ValueError, match="exceeds limit"):
-            validate_payload(large)
-
-    def test_empty_dict_is_valid(self):
-        validate_payload({})

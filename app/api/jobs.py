@@ -1,5 +1,7 @@
+import hashlib
+import json
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from botocore.exceptions import ClientError
@@ -8,12 +10,6 @@ from fastapi import APIRouter, HTTPException, Response
 
 from app.core.dynamo_db import get_print_job, insert_dynamodb
 from app.core.sqs_queue import is_queue_overloaded, send_to_queue
-from app.core.utils import (
-    dict_to_sha256_hash,
-    get_hours_difference,
-    get_ttl_timestamp,
-    validate_payload,
-)
 from app.dependencies import SessionDep
 from app.schemas.errors import ErrorResponse
 from app.schemas.jobs import DBJobItem, JobResponse, JobStatus, PrintJobPayload
@@ -22,6 +18,26 @@ from app.settings import get_settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def dict_to_sha256_hash(data: dict[str, object]) -> str:
+    canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def get_ttl_timestamp() -> int:
+    now_utc = datetime.now(UTC)
+    return int((now_utc + timedelta(hours=get_settings().ttl_dynamodb_item_hh)).timestamp())
+
+
+def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
+    try:
+        start = datetime.fromisoformat(start_date_str)
+        end = datetime.fromisoformat(end_date_str)
+        return (end - start).total_seconds() / 3600
+    except ValueError as e:
+        logger.exception("Invalid date format. Please use ISO 8601")
+        raise ValueError("Invalid date format. Please use ISO 8601") from e
 
 
 def _to_job_response(item: DBJobItem) -> JobResponse:
@@ -57,10 +73,13 @@ async def start_print(
 ) -> JobResponse:
     payload_dict = payload.model_dump()
 
-    try:
-        validate_payload(payload_dict)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from None
+    payload_size = len(json.dumps(payload_dict, separators=(",", ":")).encode())
+    max_size = get_settings().max_payload_size_bytes
+    if payload_size > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payload size {payload_size} bytes exceeds limit of {max_size} bytes",
+        )
 
     job_id = dict_to_sha256_hash(payload_dict)
 
