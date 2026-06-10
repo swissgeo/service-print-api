@@ -9,7 +9,6 @@ dependencies = [
     "ecs-logging~=2.2",
     "gevent~=26.5",
     "gunicorn~=25.0",
-    "logging-utilities~=5.3",
     "orjson~=3.11",
     "pydantic-settings~=2.13",
     "pyyaml~=6.0",
