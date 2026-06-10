@@ -15,11 +15,11 @@ class JobResponse(BaseModel):
     """Returned by POST /jobs (202 or 200) and GET /jobs/{job_id} (200)."""
 
     status: JobStatus
-    reportUrl: str = Field(description="URL to poll for this job's status")  # noqa: N815
+    reportPath: str = Field(description="Path to poll for this job's status")  # noqa: N815
     created: AwareDatetime = Field(description="ISO 8601 UTC creation timestamp")
     started: AwareDatetime | None = None
     finished: AwareDatetime | None = None
-    pdfUrl: str | None = None  # noqa: N815
+    pdfPath: str | None = None  # noqa: N815
     message: str | None = None
 
 
@@ -32,6 +32,6 @@ class DBJobItem(BaseModel):
     created_timestamp_iso_8601: AwareDatetime
     started_timestamp_iso_8601: AwareDatetime | None = None
     finished_timestamp_iso_8601: AwareDatetime | None = None
-    pdf_url: str | None = None
+    pdf_path: str | None = None
     message: str | None = None
     ttl: int | None = None

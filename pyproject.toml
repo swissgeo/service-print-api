@@ -21,6 +21,7 @@ dependencies = [
     "opentelemetry-instrumentation-asgi==0.62b1",
     "opentelemetry-instrumentation-botocore==0.62b1",
     "opentelemetry-instrumentation-fastapi==0.62b1",
+    "fastapi[standard]~=0.136",
 ]
 
 [dependency-groups]

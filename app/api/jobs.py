@@ -28,11 +28,11 @@ def _to_job_response(item: DBJobItem) -> JobResponse:
     """Build a JobResponse from a DBJobItem."""
     return JobResponse(
         status=item.status,
-        reportUrl=f"{get_settings().api_path_prefix}/jobs/{item.job_id}",
+        reportPath=f"{get_settings().api_path_prefix}/jobs/{item.job_id}",
         created=item.created_timestamp_iso_8601,
         started=item.started_timestamp_iso_8601,
         finished=item.finished_timestamp_iso_8601,
-        pdfUrl=item.pdf_url,
+        pdfPath=item.pdf_path,
         message=item.message,
     )
 
@@ -111,7 +111,7 @@ async def start_print(
 
     return JobResponse(
         status=JobStatus.OPEN,
-        reportUrl=f"{get_settings().api_path_prefix}/jobs/{job_id}",
+        reportPath=f"{get_settings().api_path_prefix}/jobs/{job_id}",
         created=created_ts,
     )
 
