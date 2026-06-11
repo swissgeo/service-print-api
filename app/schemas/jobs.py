@@ -51,10 +51,16 @@ class JobResponse(BaseModel):
     status: JobStatus
     reportPath: str = Field(description="Path to poll for this job's status")  # noqa: N815
     created: AwareDatetime = Field(description="ISO 8601 UTC creation timestamp")
-    started: AwareDatetime | None = None
-    finished: AwareDatetime | None = None
-    pdfPath: str | None = None  # noqa: N815
-    message: str | None = None
+    started: AwareDatetime | None = Field(
+        default=None, description="Timestamp when the renderer started processing"
+    )
+    finished: AwareDatetime | None = Field(
+        default=None, description="Timestamp when rendering completed"
+    )
+    pdfPath: str | None = Field(  # noqa: N815
+        default=None, description="Path to the rendered PDF; set when status is finished"
+    )
+    message: str | None = Field(default=None, description="Optional status or error message")
 
 
 class DBJobItem(BaseModel):
