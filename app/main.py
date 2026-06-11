@@ -87,6 +87,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_customize_openapi(app)
+
 # CORS — allow_origin_regex matches the full origin URL against the pattern.
 # For local dev ALLOWED_DOMAINS=.* expands to (.*) which matches any origin.
 # In production set ALLOWED_DOMAINS to hostname patterns, e.g. "example\.com,other\.ch".
@@ -140,9 +142,6 @@ async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
             )
         ).model_dump(),
     )
-
-
-_customize_openapi(app)
 
 
 @app.get(
