@@ -15,7 +15,7 @@ class TestPrintStatus:
         item = DBJobItem.model_validate(
             {
                 "job_id": _JOB_ID,
-                "status": "done",
+                "status": "finished",
                 "payload": {},
                 "created_timestamp_iso_8601": "2026-11-26T10:00:00+00:00",
                 "started_timestamp_iso_8601": "2026-11-26T10:01:00+00:00",
@@ -29,7 +29,7 @@ class TestPrintStatus:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "done"
+        assert data["status"] == "finished"
         assert data["reportPath"] == f"{API_PATH_PREFIX}/jobs/{_JOB_ID}"
         assert data["pdfPath"] == f"{API_PATH_PREFIX}/results/{_JOB_ID}.pdf"
         assert data["message"] == "Print completed"

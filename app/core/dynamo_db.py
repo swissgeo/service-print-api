@@ -35,7 +35,7 @@ async def insert_dynamodb(item: dict[str, Any], session: aioboto3.Session) -> No
         logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
 
 
-async def get_print_job(job_id: str | None, session: aioboto3.Session) -> DBJobItem | None:
+async def get_print_job(job_id: str, session: aioboto3.Session) -> DBJobItem | None:
     """Retrieve a print job from DynamoDB by job_id, or None if not found."""
     settings = get_settings()
     async with _dynamodb_resource(session) as dynamodb:

@@ -7,8 +7,16 @@ from app.settings import get_settings
 
 
 class JobStatus(StrEnum):
+    """Status of a print job.
+
+    - `open`: job submitted successfully to the print queue
+    - `started`: renderer has started processing the job
+    - `finished`: rendering complete; document is ready for download
+    - `error`: rendering failed
+    """
+
     OPEN = "open"
-    DONE = "done"
+    STARTED = "started"
     FINISHED = "finished"
     ERROR = "error"
 

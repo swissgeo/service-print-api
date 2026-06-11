@@ -88,7 +88,7 @@ class TestStartPrint:
         existing_item = DBJobItem.model_validate(
             {
                 "job_id": _JOB_ID,
-                "status": "done",
+                "status": "finished",
                 "payload": _PAYLOAD,
                 "created_timestamp_iso_8601": "2026-11-26T10:00:00+00:00",
             }
