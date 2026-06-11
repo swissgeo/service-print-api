@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import aioboto3
-from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 from app.core.aws import botocore_config
 from app.schemas.jobs import DBJobItem
@@ -29,39 +28,19 @@ async def _dynamodb_resource(session: aioboto3.Session) -> AsyncGenerator[Any]:
 async def insert_dynamodb(item: dict[str, Any], session: aioboto3.Session) -> None:
     """Insert a print job item into DynamoDB."""
     settings = get_settings()
-    logger.info(item)
-    try:
-        async with _dynamodb_resource(session) as dynamodb:
-            table = await dynamodb.Table(settings.dynamodb_table_name)
-            await table.put_item(Item=item)
-            logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
-    except ConnectTimeoutError:
-        logger.exception("Connection timeout inserting job %s into DynamoDB", item["job_id"])
-        raise
-    except ReadTimeoutError:
-        logger.exception("Read timeout inserting job %s into DynamoDB", item["job_id"])
-        raise
-    except ClientError:
-        logger.exception("Error updating dynamodb")
-        raise
+    logger.info("Inserting job %s (status=%s)", item["job_id"], item["status"])
+    async with _dynamodb_resource(session) as dynamodb:
+        table = await dynamodb.Table(settings.dynamodb_table_name)
+        await table.put_item(Item=item)
+        logger.debug("Put job %s into DynamoDB (status=%s)", item["job_id"], item["status"])
 
 
 async def get_print_job(job_id: str | None, session: aioboto3.Session) -> DBJobItem | None:
     """Retrieve a print job from DynamoDB by job_id, or None if not found."""
     settings = get_settings()
-    try:
-        async with _dynamodb_resource(session) as dynamodb:
-            table = await dynamodb.Table(settings.dynamodb_table_name)
-            response = await table.get_item(Key={"job_id": job_id})
-    except ConnectTimeoutError:
-        logger.exception("Connection timeout looking up print job %s", job_id)
-        raise
-    except ReadTimeoutError:
-        logger.exception("Read timeout looking up print job %s", job_id)
-        raise
-    except ClientError:
-        logger.exception("Error looking up print job %s", job_id)
-        raise
+    async with _dynamodb_resource(session) as dynamodb:
+        table = await dynamodb.Table(settings.dynamodb_table_name)
+        response = await table.get_item(Key={"job_id": job_id})
     if "Item" in response:
         return DBJobItem.model_validate(dict(response["Item"]))
     return None

@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import aioboto3
-from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
 
 from app.core.aws import botocore_config
 from app.settings import get_settings
@@ -48,22 +47,10 @@ async def is_queue_overloaded(session: aioboto3.Session) -> bool:
 async def send_to_queue(message: dict[str, Any], session: aioboto3.Session) -> None:
     """Serialize message to JSON and send it to the configured SQS queue."""
     settings = get_settings()
-    try:
-        async with _sqs_client(session) as sqs:
-            queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
-            await sqs.send_message(
-                QueueUrl=queue_url,
-                MessageBody=json.dumps(message),
-            )
-            logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
-    except ConnectTimeoutError:
-        logger.exception(
-            "Connection timeout sending message to SQS queue %s", settings.sqs_queue_name
+    async with _sqs_client(session) as sqs:
+        queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
+        await sqs.send_message(
+            QueueUrl=queue_url,
+            MessageBody=json.dumps(message),
         )
-        raise
-    except ReadTimeoutError:
-        logger.exception("Read timeout sending message to SQS queue %s", settings.sqs_queue_name)
-        raise
-    except ClientError:
-        logger.exception("Error sending message to SQS queue %s", settings.sqs_queue_name)
-        raise
+        logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
