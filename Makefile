@@ -6,7 +6,7 @@ SERVICE_NAME := service-print-api
 
 CURRENT_DIR := $(shell pwd)
 
-HTTP_PORT ?= 3000
+HTTP_PORT ?= 8000
 
 # Docker metadata
 GIT_HASH := $(shell git rev-parse HEAD)
@@ -17,15 +17,14 @@ GIT_TAG := $(shell git describe --tags || echo "no version info")
 AUTHOR := $(USER)
 
 
-# Flask specific
-APP_SRC_DIR := app
-
 # Commands
 UV_RUN := uv run
 PYTHON := $(UV_RUN) python3
 TEST := $(UV_RUN) pytest
 RUFF := $(UV_RUN) ruff
 TY := $(UV_RUN) ty
+FASTAPI := $(UV_RUN) fastapi
+UVICORN := $(UV_RUN) uvicorn
 
 # Docker variables?
 DOCKER_REGISTRY = 074597099015.dkr.ecr.eu-central-1.amazonaws.com
@@ -44,6 +43,7 @@ export UV_ENV_FILE := $(ENV_FILE)
 
 # Logging
 LOGS_DIR = $(PWD)/logs
+CONTAINER_LOGGING_CONFIG := /opt/service-print-api/logging-config.yaml
 
 .env:
 	cp .env.default .env
@@ -90,13 +90,8 @@ ci-check-format: format ## Check the format (CI)
 
 
 .PHONY: serve
-serve: start-moto ## Serve the application locally
-	ENV_FILE=.env $(UV_RUN) flask --env-file .env --app app run --port=$(HTTP_PORT) --debug
-
-
-.PHONY: gunicornserve
-gunicornserve: start-moto ## Serve the application locally with gunicorn
-	ENV_FILE=.env $(UV_RUN) python -m app.wsgi
+serve: start-moto ## Serve the application for development
+	${FASTAPI} dev --port ${HTTP_PORT}
 
 
 .PHONY: dockerlogin
@@ -111,7 +106,6 @@ dockerbuild:  $(LOGS_DIR) ## Create a docker image
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
 		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
 		--build-arg VERSION="$(GIT_TAG)" \
-		--build-arg HTTP_PORT="$(HTTP_PORT)" \
 		--build-arg AUTHOR="$(AUTHOR)" -t $(DOCKER_IMG_LOCAL_TAG) .
 
 
@@ -123,12 +117,13 @@ dockerpush: dockerbuild ## Push to the docker registry
 .PHONY: dockerrun
 dockerrun: start-moto dockerbuild ## Run the locally built docker image
 	docker run \
-		-it -p $(HTTP_PORT):$(HTTP_PORT) \
+		-it \
 		--env-file=${ENV_FILE} \
 		--env ALLOWED_HOSTS=127.0.0.1 \
-		--network shared_network_local \
-		-e MOTO_HOST=moto-server \
-		$(DOCKER_IMG_LOCAL_TAG)
+		--env LOGGING_CONFIG_FILE=$(CONTAINER_LOGGING_CONFIG) \
+		--net=host \
+		-v $(PWD)/$(LOGGING_CONFIG_FILE):$(CONTAINER_LOGGING_CONFIG):ro \
+		$(DOCKER_IMG_LOCAL_TAG) --log-config $(CONTAINER_LOGGING_CONFIG) --port $(HTTP_PORT)
 
 
 .PHONY: lint
@@ -158,6 +153,16 @@ test-ci: $(LOGS_DIR) ## Run tests in the CI
 .PHONY: test
 test: $(LOGS_DIR) ## Run tests locally
 	$(TEST) --cov --cov-branch --cov-report=html
+
+
+.PHONY: start-otel
+start-otel: ## Run otel collector and jaeger trace analyzer locally
+	docker compose -p service-print-local-otel -f docker-compose-otel.yml up -d
+
+
+.PHONY: stop-otel
+stop-otel: ## Stop the otel collector and jaeger trace analyzer
+	docker compose -p service-print-local-otel -f docker-compose-otel.yml down
 
 
 .PHONY: help

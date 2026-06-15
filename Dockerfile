@@ -3,7 +3,6 @@
 # It should only contain variables that don't change or change very infrequently
 # so that the cache is not needlessly invalidated
 FROM python:3.14-slim-trixie AS base
-ENV HTTP_PORT=8080
 ENV USER=swissgeo
 ENV GROUP=swissgeo
 ENV INSTALL_DIR=/opt/service-print-api
@@ -17,7 +16,7 @@ RUN apt-get -qq update > /dev/null \
 ###########################################################
 # Builder container
 FROM base AS builder
-COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.8 /uv /uvx /bin/
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -34,6 +33,8 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 # for an example.
 ENV UV_PYTHON_DOWNLOADS=0
 
+WORKDIR ${INSTALL_DIR}
+
 # Install all the dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -41,6 +42,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 COPY --chown=${USER}:${GROUP} app/ ${INSTALL_DIR}/app/
+COPY --chown=${USER}:${GROUP} logging-*.yaml ${INSTALL_DIR}/
 RUN mkdir -p ${INSTALL_DIR}/logs && chown ${USER}:${GROUP} ${INSTALL_DIR}/logs
 
 
@@ -80,7 +82,7 @@ ENV PYTHONHOME=""
 
 # Overwrite the version.py from source with the actual version
 ARG VERSION=unknown
-RUN echo "APP_VERSION = '$VERSION'" > ${INSTALL_DIR}/app/config/version.py
+RUN echo "__version__ = '$VERSION'" > ${INSTALL_DIR}/app/version.py
 
 ARG GIT_HASH=unknown
 ARG GIT_BRANCH=unknown
@@ -95,10 +97,10 @@ LABEL version=$VERSION
 WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
-EXPOSE ${HTTP_PORT}
+# expose the default port of uvicorn
+EXPOSE 8000
 
-ENTRYPOINT ["python"]
-CMD ["-m", "app.wsgi"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
 
 
 ###########################################################
@@ -107,7 +109,7 @@ FROM base AS production
 LABEL target=production
 ENV DEBUG=0
 
-COPY --from=builder .venv/ ${INSTALL_DIR}/.venv/
+COPY --from=builder ${INSTALL_DIR}/.venv/ ${INSTALL_DIR}/.venv/
 
 COPY --from=builder ${INSTALL_DIR}/ ${INSTALL_DIR}/
 
@@ -118,7 +120,7 @@ ENV PYTHONHOME=""
 
 # Overwrite the version.py from source with the actual version
 ARG VERSION=unknown
-RUN echo "APP_VERSION = '$VERSION'" > ${INSTALL_DIR}/app/config/version.py
+RUN echo "__version__ = '$VERSION'" > ${INSTALL_DIR}/app/version.py
 
 ARG GIT_HASH=unknown
 ARG GIT_BRANCH=unknown
@@ -133,7 +135,7 @@ LABEL version=$VERSION
 WORKDIR ${INSTALL_DIR}
 USER ${USER}
 
-EXPOSE ${HTTP_PORT}
+# expose the default port of uvicorn
+EXPOSE 8000
 
-ENTRYPOINT ["python"]
-CMD ["-m", "app.wsgi"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]

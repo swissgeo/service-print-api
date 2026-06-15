@@ -5,39 +5,44 @@ description = "The API that handles print requests"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "Flask~=3.1",
+    "aioboto3~=15.5.0",
     "ecs-logging~=2.2",
     "gevent~=26.5",
     "gunicorn~=25.0",
-    "logging-utilities~=5.3",
+    "orjson~=3.11",
+    "pydantic-settings~=2.13",
     "pyyaml~=6.0",
-    "whitenoise~=6.11",
-    "boto3~=1.42",
-    "python-dotenv~=1.2",
+    "types-aiobotocore[dynamodb,sqs]~=3.4",
     "types-pyyaml~=6.0",
     # OpenTelemetry packages
-    "opentelemetry-sdk~=1.39",
-    "opentelemetry-exporter-otlp~=1.39",
-    "opentelemetry-instrumentation-flask==0.60b1",
-    "opentelemetry-instrumentation-logging==0.60b1",
-    "opentelemetry-instrumentation-botocore==0.60b1",
+    "opentelemetry-sdk~=1.41",
+    "opentelemetry-exporter-otlp~=1.41",
+    "opentelemetry-instrumentation-asgi==0.62b1",
+    "opentelemetry-instrumentation-botocore==0.62b1",
+    "opentelemetry-instrumentation-fastapi==0.62b1",
+    "fastapi[standard]~=0.136",
 ]
 
 [dependency-groups]
 dev = [
     "debugpy",
-    "ty",
-    "pytest",
-    "pytest-cov",
-    "pytest-xdist",
-    "types-gevent~=25.4",
-    "types-gunicorn~=25.1",
-    "ruff>=0.14",
-    "boto3-stubs[dynamodb,sqs]~=1.42",
+    "httpx~=0.28",
+    "moto[dynamodb,sqs,server]~=5.1",
+    "pytest~=9.0",
+    "pytest-asyncio~=1.3",
+    "pytest-cov~=7.1",
+    "pytest-xdist~=3.8",
+    "ruff~=0.15",
+    "ty~=0.0",
 ]
 
 [tool.uv]
 package = false # Do not install as a package
+
+#===============================================================================
+# FastAPI configuration
+[tool.fastapi]
+entrypoint = "app.main:app"
 
 
 #===============================================================================
@@ -66,17 +71,19 @@ target-version = "py314"
 select = ["ALL"]
 ignore = [
     "ANN401", # Ignore Any typehint
-    "ANN002", # Ignore typehint for *args
-    "ANN003", # Ignore typehint for **kwargs
     "D",      # Ignore pydocstyle
     "EM",     # Ignore flake8-errmsg
     "TRY003", # Ignore long messages in exception constructors
     "FBT001", # Ignore boolean-type-hint-positional-argument
     "FBT002", # Ignore boolean-default-value-positional-argument
-    "PTH123", # Ignore builtin-open
     "TD",     # Ignore flake8-todos
     "FIX",    # Ignore fixme comments
     "COM812", # flak8-commas missing-trailing-comma is ignored to avoid conflict with formatter which enforces trailing commas
+    # Pydantic and FastAPI consume type annotations at runtime; keeping them
+    # inside TYPE_CHECKING blocks causes subtle failures.
+    "TC001",
+    "TC002",
+    "TC003",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -90,17 +97,12 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # ruff ignore per files
 [tool.ruff.lint.per-file-ignores]
 
-"app/helpers/otel.py" = [
-    "PLC0415",  # Lazy imports are intentional (gevent/OTEL bootstrapping order)
-]
-
 "app/tests/**" = [
     "S101",    # Ignore usage of assert statements in tests
     "ANN201",  # Ignore missing return type hints in tests
     "INP001",  # Ignore implicit namespace packages in tests
     "ANN001",  # Ignore missing type hints in tests
     "ARG001",  # Ignore unused function arguments in tests
-    "ARG005",  # Ignore unused lambda argument in tests
     "PLR2004", # Ignore magic number in tests
 ]
 
@@ -115,26 +117,27 @@ section-order = [
     "future",
     "standard-library",
     "third-party",
-    "flask",
+    "fastapi",
     "test",
     "first-party",
     "local-folder",
 ]
 
 [tool.ruff.lint.isort.sections]
-flask = ["flask", "werkzeug"]
+fastapi = ["fastapi", "pydantic"]
 test = ["pytest"]
 
 #===============================================================================
 # Pytest configuration
-[tool.pytest]
+[tool.pytest.ini_options]
 pythonpath = ["app"]
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
 
 #==============================================================================
 # Coverage configuration
 [tool.coverage.run]
-omit = ["*/tests/*"]
+omit = ["*/tests/*", "version.py", "otel.py"]
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:"]

@@ -1,82 +1,79 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from botocore.exceptions import ClientError
 
 import pytest
 
-from app.helpers.dynamo_db import get_print_job, insert_dynamodb
+from app.core.dynamo_db import get_print_job, insert_dynamodb
+
+_JOB_ID = "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c"
+
+
+def _dynamo_session(table_mock: AsyncMock) -> MagicMock:
+    """Build a minimal aioboto3 session mock for DynamoDB resource usage."""
+    dynamodb_resource = MagicMock()
+    dynamodb_resource.Table = AsyncMock(return_value=table_mock)
+    cm = AsyncMock()
+    cm.__aenter__.return_value = dynamodb_resource
+    session = MagicMock()
+    session.resource.return_value = cm
+    return session
+
+
+_DYNAMO_ITEM = {
+    "job_id": _JOB_ID,
+    "status": "open",
+    "payload": {},
+    "created_timestamp_iso_8601": "2026-01-01T00:00:00+00:00",
+}
 
 
 class TestGetPrintJob:
-    @patch("app.helpers.dynamo_db.get_dynamodb_table")
-    def test_returns_item_when_found(self, mock_get_table):
-        mock_table = MagicMock()
-        mock_table.get_item.return_value = {
-            "Item": {
-                "job_id": "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",
-                "status": "open",
-            }
-        }
-        mock_get_table.return_value = mock_table
+    async def test_returns_item_when_found(self):
+        mock_table = AsyncMock()
+        mock_table.get_item.return_value = {"Item": _DYNAMO_ITEM}
 
-        result = get_print_job("8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c")
+        result = await get_print_job(_JOB_ID, session=_dynamo_session(mock_table))
 
-        assert result == {
-            "job_id": "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",
-            "status": "open",
-        }
-        mock_table.get_item.assert_called_once_with(
-            Key={"job_id": "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c"}
-        )
+        assert result is not None
+        assert result.job_id == _JOB_ID
+        assert result.status == "open"
+        mock_table.get_item.assert_called_once_with(Key={"job_id": _JOB_ID})
 
-    @patch("app.helpers.dynamo_db.get_dynamodb_table")
-    def test_returns_none_when_not_found(self, mock_get_table):
-        mock_table = MagicMock()
+    async def test_returns_none_when_not_found(self):
+        mock_table = AsyncMock()
         mock_table.get_item.return_value = {}
-        mock_get_table.return_value = mock_table
 
-        result = get_print_job("nonexistent")
+        result = await get_print_job("nonexistent", session=_dynamo_session(mock_table))
 
         assert result is None
 
-    @patch("app.helpers.dynamo_db.get_dynamodb_table")
-    def test_raises_client_error(self, mock_get_table):
-        mock_table = MagicMock()
+    async def test_raises_client_error(self):
+        mock_table = AsyncMock()
         mock_table.get_item.side_effect = ClientError(
             {"Error": {"Code": "500", "Message": "Internal"}}, "GetItem"
         )
-        mock_get_table.return_value = mock_table
 
         with pytest.raises(ClientError):
-            get_print_job("8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c")
+            await get_print_job(_JOB_ID, session=_dynamo_session(mock_table))
 
 
 class TestInsertDynamodb:
-    @patch("app.helpers.dynamo_db.get_dynamodb_table")
-    def test_calls_put_item(self, mock_get_table):
-        mock_table = MagicMock()
-        mock_get_table.return_value = mock_table
-        item = {
-            "job_id": "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",
-            "status": "open",
-        }
+    async def test_calls_put_item(self):
+        mock_table = AsyncMock()
+        item = {"job_id": _JOB_ID, "status": "open"}
 
-        insert_dynamodb(item)
+        await insert_dynamodb(item, session=_dynamo_session(mock_table))
 
         mock_table.put_item.assert_called_once_with(Item=item)
 
-    @patch("app.helpers.dynamo_db.get_dynamodb_table")
-    def test_raises_client_error(self, mock_get_table):
-        mock_table = MagicMock()
+    async def test_raises_client_error(self):
+        mock_table = AsyncMock()
         mock_table.put_item.side_effect = ClientError(
             {"Error": {"Code": "500", "Message": "Internal"}}, "PutItem"
         )
-        mock_get_table.return_value = mock_table
 
         with pytest.raises(ClientError):
-            insert_dynamodb(
-                {
-                    "job_id": "8683200e8facbf29ae87daae3ffb80c824cc88d277c4ee51fdbda4a96e1a5b9c",
-                    "status": "open",
-                }
+            await insert_dynamodb(
+                {"job_id": _JOB_ID, "status": "open"}, session=_dynamo_session(mock_table)
             )

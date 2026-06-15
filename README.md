@@ -10,6 +10,7 @@
 - [Table of Content](#table-of-content)
 - [Summary Of The Project](#summary-of-the-project)
 - [Service API](#service-api)
+- [API Documentation](#api-documentation)
 - [Versioning](#versioning)
 - [Local Development](#local-development)
   - [Dependencies](#dependencies)
@@ -36,13 +37,29 @@ As soon as the print has been accomplished, the client recives a positive status
 
 Furthermore there exists the checker GET endpoint to test, if the server is up:
 
-The base path is configurable via the `API_PATH_PREFIX` environment variable (default: `/api/print`).
+The base path is configurable via the `API_PATH_PREFIX` environment variable (default: `/api/wps/v1/print`).
 
 | Path | Method | Argument | Response Type |
 |------|--------|----------|---------------|
 | `$API_PATH_PREFIX`/checker | GET | - | application/json |
 | `$API_PATH_PREFIX`/jobs | POST | json (f.ex. post_print.sh) | application/json |
 | `$API_PATH_PREFIX`/jobs/\<job_id\> | GET | job_id | application/json |
+
+## API Documentation
+
+FastAPI automatically generates an OpenAPI schema from the endpoint definitions and Pydantic models.
+Each path operation defines its request parameters and responses using Pydantic models, which are
+reflected directly in the generated schema. To explore the interactive documentation, start the
+local server:
+
+```bash
+make serve
+```
+
+Then open:
+
+- [http://localhost:3000/docs](http://localhost:3000/docs) — Swagger UI (interactive)
+- [http://localhost:3000/redoc](http://localhost:3000/redoc) — ReDoc
 
 ## Versioning
 
@@ -110,7 +127,7 @@ AWS_ACCESS_KEY_ID=123 AWS_SECRET_ACCESS_KEY=123 \
 All packages used in production are pinned to a major version. Automatically updating these packages
 will use the latest minor (or patch) version available. Packages used for development, on the other
 hand, are not pinned unless they need to be used with a specific version of a production package
-(for example, boto3-stubs for boto3).
+(for example, types-aiobotocore for aioboto3).
 
 To update the packages to the latest minor/compatible versions, run:
 
@@ -127,7 +144,7 @@ uv pip list --outdated
 To update packages to a new major release, run:
 
 ```bash
-uv add Flask~=3.1
+uv add fastapi~=0.135
 ```
 
 ## Deployment configuration
@@ -161,7 +178,7 @@ The service is configured by Environment Variable:
 | Env | Default | Description |
 | --- | ------- | ----------- |
 | OTEL_SDK_DISABLED | `false` | Set to `true` to disable all OTEL instrumentation |
-| OTEL_ENABLE_FLASK | `false` | Set to `true` to enable automatic tracing of Flask HTTP requests |
+| OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
 | OTEL_ENABLE_LOGGING | `false` | Set to `true` to inject `otelTraceID` and `otelSpanID` into log records |
 | OTEL_ENABLE_BOTOCORE | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
@@ -178,5 +195,5 @@ To test tracing locally, start the OTEL collector and Zipkin:
 docker compose -f docker-compose-otel.yml up -d
 ```
 
-Then start the app with `make gunicornserve`. Traces are visible at **<http://localhost:9411>** (Zipkin UI).
+Then start the app with `make serve`. Traces are visible at **<http://localhost:9411>** (Zipkin UI).
 
