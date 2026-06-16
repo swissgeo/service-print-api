@@ -16,7 +16,7 @@ _PAYLOAD = {
     "print_orientation": "landscape",
     "print_resolution": 96,
     "print_scale": 25000,
-    "state": "cHJpbnRfbWFw",
+    "state_id": "a1b2c3d4e5f6a1b2",
 }
 
 _JOB_ID = "684394c1bef082925d690f05f75b3e248b6a56327229475985891fee84564d75"
@@ -187,7 +187,7 @@ class TestPrintJobPayload:
             print_format="a4",
             print_orientation="portrait",
             print_resolution=96,
-            state="cHJpbnRfbWFw",
+            state_id="deadbeefcafe0123",
         )
         assert payload.print_scale is None
 
@@ -218,15 +218,14 @@ class TestPrintJobPayload:
         with pytest.raises(ValidationError, match="print_resolution"):
             PrintJobPayload(**{**_PAYLOAD, "print_resolution": "high"})
 
-    def test_state_within_limit_is_valid(self):
-        max_len = get_settings().max_character_size_of_state
-        payload = PrintJobPayload(**{**_PAYLOAD, "state": "a" * max_len})
-        assert len(payload.state) == max_len
+    def test_valid_state_id(self):
+        payload = PrintJobPayload(**{**_PAYLOAD, "state_id": "deadbeefcafe0123"})
+        assert payload.state_id == "deadbeefcafe0123"
 
-    def test_state_exceeding_limit_raises(self):
-        max_len = get_settings().max_character_size_of_state
-        with pytest.raises(ValidationError, match="State must not exceed"):
-            PrintJobPayload(**{**_PAYLOAD, "state": "a" * (max_len + 1)})
+    @pytest.mark.parametrize("state_id", ["tooshort", "a" * 17, "DEADBEEFCAFE0123", "deadbeefcafe012g"])
+    def test_invalid_state_id_raises(self, state_id):
+        with pytest.raises(ValidationError, match="state_id"):
+            PrintJobPayload(**{**_PAYLOAD, "state_id": state_id})
 
     @pytest.mark.parametrize("resolution", [72, 96, 150, 300])
     def test_valid_resolutions(self, resolution):

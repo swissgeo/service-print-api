@@ -1,9 +1,7 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import AwareDatetime, BaseModel, Field, field_validator
-
-from app.settings import get_settings
+from pydantic import AwareDatetime, BaseModel, Field
 
 
 class JobStatus(StrEnum):
@@ -32,17 +30,10 @@ class PrintJobPayload(BaseModel):
     print_scale: int | None = Field(
         default=None, ge=1, le=5_000_000, description="Map scale denominator"
     )
-    state: str = Field(
-        description="The map state. This can be a URL to the state or the state in base64"
+    state_id: str = Field(
+        pattern=r"^[0-9a-f]{16}$",
+        description="SHA-256-derived identifier for the map state (16 lowercase hex characters)",
     )
-
-    @field_validator("state")
-    @classmethod
-    def validate_state_length(cls, v: str) -> str:
-        max_len = get_settings().max_character_size_of_state
-        if len(v) > max_len:
-            raise ValueError(f"State must not exceed {max_len} characters")
-        return v
 
 
 class JobResponse(BaseModel):
