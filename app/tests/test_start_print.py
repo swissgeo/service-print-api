@@ -16,7 +16,7 @@ _PAYLOAD = {
     "print_orientation": "landscape",
     "print_resolution": 96,
     "print_scale": 25000,
-    "state_id": "a1b2c3d4e5f6a1b2",
+    "state_id": "Htq_kVDm5FMu79Jx",
 }
 
 _JOB_ID = "684394c1bef082925d690f05f75b3e248b6a56327229475985891fee84564d75"
@@ -182,6 +182,11 @@ class TestPrintJobPayload:
         assert payload.print_format == "a4"
         assert payload.print_scale == 25000
 
+    def test_print_legend_and_grid_are_optional(self):
+        payload = PrintJobPayload(**_PAYLOAD)
+        assert payload.print_legend is None
+        assert payload.print_grid is None
+
     def test_print_scale_is_optional(self):
         payload = PrintJobPayload(
             print_format="a4",
@@ -219,10 +224,10 @@ class TestPrintJobPayload:
             PrintJobPayload(**{**_PAYLOAD, "print_resolution": "high"})
 
     def test_valid_state_id(self):
-        payload = PrintJobPayload(**{**_PAYLOAD, "state_id": "deadbeefcafe0123"})
-        assert payload.state_id == "deadbeefcafe0123"
+        payload = PrintJobPayload(**{**_PAYLOAD, "state_id": "Htq_kVDm5FMu79Jx"})
+        assert payload.state_id == "Htq_kVDm5FMu79Jx"
 
-    @pytest.mark.parametrize("state_id", ["tooshort", "a" * 17, "DEADBEEFCAFE0123", "deadbeefcafe012g"])
+    @pytest.mark.parametrize("state_id", ["tooshort", "a" * 17, "Htq_kVDm5FMu79J!"])
     def test_invalid_state_id_raises(self, state_id):
         with pytest.raises(ValidationError, match="state_id"):
             PrintJobPayload(**{**_PAYLOAD, "state_id": state_id})

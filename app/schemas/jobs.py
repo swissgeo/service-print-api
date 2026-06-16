@@ -31,8 +31,14 @@ class PrintJobPayload(BaseModel):
         default=None, ge=1, le=5_000_000, description="Map scale denominator"
     )
     state_id: str = Field(
-        pattern=r"^[0-9a-f]{16}$",
-        description="SHA-256-derived identifier for the map state (16 lowercase hex characters)",
+        pattern=r"^[A-Za-z0-9_-]{16}$",
+        description="Identifier for the map state (16 URL-safe base64 characters)",
+    )
+    print_legend: bool | None = Field(
+        default=None, description="Whether to include the legend in the print output"
+    )
+    print_grid: bool | None = Field(
+        default=None, description="Whether to overlay a grid on the map"
     )
 
 
