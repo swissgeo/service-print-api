@@ -40,7 +40,7 @@ class TestStartPrint:
         assert response.status_code == 202
         data = response.json()
         assert data["status"] == "open"
-        assert "reportPath" in data
+        assert "reportUrl" in data
         mock_insert.assert_called_once()
         mock_send.assert_called_once()
 

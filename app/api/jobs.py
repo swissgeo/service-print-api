@@ -46,11 +46,11 @@ def _to_job_response(item: DBJobItem) -> JobResponse:
     settings = get_settings()
     return JobResponse(
         status=item.status,
-        reportPath=f"{settings.api_path_prefix}/jobs/{item.job_id}",
+        reportUrl=f"{settings.api_base_url}{settings.api_path_prefix}/jobs/{item.job_id}",
         created=item.created_timestamp_iso_8601,
         started=item.started_timestamp_iso_8601,
         finished=item.finished_timestamp_iso_8601,
-        pdfPath=item.pdf_path,
+        pdfUrl=f"{settings.api_base_url}{item.pdf_path}" if item.pdf_path else None,
         message=item.message,
     )
 
@@ -120,7 +120,7 @@ async def start_print(
 
     return JobResponse(
         status=JobStatus.OPEN,
-        reportPath=f"{settings.api_path_prefix}/jobs/{job_id}",
+        reportUrl=f"{settings.api_base_url}{settings.api_path_prefix}/jobs/{job_id}",
         created=created_ts,
     )
 

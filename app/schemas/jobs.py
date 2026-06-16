@@ -49,7 +49,7 @@ class JobResponse(BaseModel):
     """Returned by POST /jobs (202 or 200) and GET /jobs/{job_id} (200)."""
 
     status: JobStatus
-    reportPath: str = Field(description="Path to poll for this job's status")  # noqa: N815
+    reportUrl: str = Field(description="URL to poll for this job's status")  # noqa: N815
     created: AwareDatetime = Field(description="ISO 8601 UTC creation timestamp")
     started: AwareDatetime | None = Field(
         default=None, description="Timestamp when the renderer started processing"
@@ -57,8 +57,8 @@ class JobResponse(BaseModel):
     finished: AwareDatetime | None = Field(
         default=None, description="Timestamp when rendering completed"
     )
-    pdfPath: str | None = Field(  # noqa: N815
-        default=None, description="Path to the rendered PDF; set when status is finished"
+    pdfUrl: str | None = Field(  # noqa: N815
+        default=None, description="URL to the rendered PDF; set when status is finished"
     )
     message: str | None = Field(default=None, description="Optional status or error message")
 

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     )
 
     # API
+    api_base_url: str = "http://localhost:3000"
     api_path_prefix: str = "/api/wps/v1/print"
 
     # CORS: comma-separated regex patterns, e.g. ".*" or "example\.com,localhost"
