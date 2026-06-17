@@ -182,10 +182,11 @@ class TestPrintJobPayload:
         assert payload.print_format == "a4"
         assert payload.print_scale == 25000
 
-    def test_print_legend_and_grid_are_optional(self):
+    def test_print_legend_grid_and_lang_are_optional(self):
         payload = PrintJobPayload(**_PAYLOAD)
         assert payload.print_legend is None
         assert payload.print_grid is None
+        assert payload.print_lang is None
 
     def test_print_scale_is_optional(self):
         payload = PrintJobPayload(
@@ -251,3 +252,12 @@ class TestPrintJobPayload:
     def test_out_of_range_scale_raises(self, scale):
         with pytest.raises(ValidationError, match="print_scale"):
             PrintJobPayload(**{**_PAYLOAD, "print_scale": scale})
+
+    @pytest.mark.parametrize("lang", ["de", "fr", "it", "en", "rm"])
+    def test_valid_langs(self, lang):
+        payload = PrintJobPayload(**{**_PAYLOAD, "print_lang": lang})
+        assert payload.print_lang == lang
+
+    def test_invalid_lang_raises(self):
+        with pytest.raises(ValidationError, match="print_lang"):
+            PrintJobPayload(**{**_PAYLOAD, "print_lang": "es"})

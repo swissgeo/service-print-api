@@ -40,6 +40,9 @@ class PrintJobPayload(BaseModel):
     print_grid: bool | None = Field(
         default=None, description="Whether to overlay a grid on the map"
     )
+    print_lang: Literal["de", "fr", "it", "en", "rm"] | None = Field(
+        default=None, description="Language for the print output"
+    )
 
 
 class JobResponse(BaseModel):
