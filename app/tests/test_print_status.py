@@ -7,7 +7,8 @@ from app.settings import get_settings
 
 _settings = get_settings()
 API_PATH_PREFIX = _settings.api_path_prefix
-API_BASE_URL = _settings.api_base_url
+# Matches the test client's base_url (see conftest.py), used by request.base_url.
+API_BASE_URL = "http://test"
 
 _JOB_ID = "e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
 

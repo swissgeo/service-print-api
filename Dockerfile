@@ -100,7 +100,13 @@ USER ${USER}
 # expose the default port of uvicorn
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
+# Trust X-Forwarded-* headers so request.base_url reflects the public scheme/host
+# set by the reverse proxy (traefik). FORWARDED_ALLOW_IPS lists the proxy IPs to
+# trust; "*" relies on k8s network policies to ensure only traefik can reach the
+# pod. Override at deploy time with traefik's pod CIDR for a tighter allowlist.
+ENV FORWARDED_ALLOW_IPS=*
+
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers"]
 
 
 ###########################################################
@@ -138,4 +144,10 @@ USER ${USER}
 # expose the default port of uvicorn
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
+# Trust X-Forwarded-* headers so request.base_url reflects the public scheme/host
+# set by the reverse proxy (traefik). FORWARDED_ALLOW_IPS lists the proxy IPs to
+# trust; "*" relies on k8s network policies to ensure only traefik can reach the
+# pod. Override at deploy time with traefik's pod CIDR for a tighter allowlist.
+ENV FORWARDED_ALLOW_IPS=*
+
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers"]

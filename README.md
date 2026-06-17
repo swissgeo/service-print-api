@@ -154,7 +154,6 @@ The service is configured by Environment Variable:
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
-| API_BASE_URL | `http://localhost:${HTTP_PORT}` | Base URL used to construct absolute URLs in job responses (e.g. `reportUrl`, `pdfUrl`) |
 | API_PATH_PREFIX | `/api/wps/v1/print` | Base path prefix for all API routes |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
 | MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
@@ -172,6 +171,7 @@ The service is configured by Environment Variable:
 | TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
 | AWS_CONNECT_TIMEOUT | `5` | Timeout in seconds for establishing a connection to DynamoDB/SQS |
 | AWS_READ_TIMEOUT | `30` | Timeout in seconds for reading a response from DynamoDB/SQS |
+| FORWARDED_ALLOW_IPS | `*` | uvicorn setting: which proxy IPs to trust for `X-Forwarded-*` headers (used to build absolute URLs like `reportUrl`/`pdfUrl`). Default `*` trusts any source and relies on k8s network policies; set to traefik's pod CIDR for a tighter allowlist |
 
 ### OpenTelemetry (tracing)
 

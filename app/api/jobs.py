@@ -6,7 +6,7 @@ from typing import Any
 
 from botocore.exceptions import ClientError
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dynamo_db import get_print_job, insert_dynamodb
 from app.core.sqs_queue import is_queue_overloaded, send_to_queue
@@ -41,16 +41,17 @@ def get_hours_difference(start_date_str: str, end_date_str: str) -> float:
         raise ValueError("Invalid date format. Please use ISO 8601") from e
 
 
-def _to_job_response(item: DBJobItem) -> JobResponse:
+def _to_job_response(item: DBJobItem, request: Request) -> JobResponse:
     """Build a JobResponse from a DBJobItem."""
     settings = get_settings()
+    base_url = str(request.base_url).rstrip("/")
     return JobResponse(
         status=item.status,
-        reportUrl=f"{settings.api_base_url}{settings.api_path_prefix}/jobs/{item.job_id}",
+        reportUrl=f"{base_url}{settings.api_path_prefix}/jobs/{item.job_id}",
         created=item.created_timestamp_iso_8601,
         started=item.started_timestamp_iso_8601,
         finished=item.finished_timestamp_iso_8601,
-        pdfUrl=f"{settings.api_base_url}{item.pdf_path}" if item.pdf_path else None,
+        pdfUrl=f"{base_url}{item.pdf_path}" if item.pdf_path else None,
         message=item.message,
     )
 
@@ -70,6 +71,7 @@ def _to_job_response(item: DBJobItem) -> JobResponse:
 )
 async def start_print(
     session: SessionDep,
+    request: Request,
     response: Response,
     payload: PrintJobPayload,
 ) -> JobResponse:
@@ -91,7 +93,7 @@ async def start_print(
         ):
             logger.info("Returning already registered print request")
             response.status_code = 200
-            return _to_job_response(existing)
+            return _to_job_response(existing, request)
 
     if await is_queue_overloaded(session):
         logger.warning("SQS queue is overloaded, rejecting new print job")
@@ -118,9 +120,10 @@ async def start_print(
         logger.exception("Error sending item to SQS queue")
         raise HTTPException(status_code=500, detail="Error sending print job to queue") from None
 
+    base_url = str(request.base_url).rstrip("/")
     return JobResponse(
         status=JobStatus.OPEN,
-        reportUrl=f"{settings.api_base_url}{settings.api_path_prefix}/jobs/{job_id}",
+        reportUrl=f"{base_url}{settings.api_path_prefix}/jobs/{job_id}",
         created=created_ts,
     )
 
@@ -146,11 +149,11 @@ async def print_list() -> None:
         500: {"model": ErrorResponse},
     },
 )
-async def print_status(job_id: str, session: SessionDep) -> JobResponse:
+async def print_status(job_id: str, session: SessionDep, request: Request) -> JobResponse:
     try:
         item = await get_print_job(job_id, session)
     except ClientError:
         raise HTTPException(status_code=500, detail="Error while looking for job_id") from None
     if item is None:
         raise HTTPException(status_code=404, detail=f"No entry found for job id {job_id}")
-    return _to_job_response(item)
+    return _to_job_response(item, request)
