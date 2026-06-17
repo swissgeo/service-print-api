@@ -154,7 +154,7 @@ The service is configured by Environment Variable:
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
-| API_PATH_PREFIX | `/api/print` | Base path prefix for all API routes |
+| API_PATH_PREFIX | `/api/wps/v1/print` | Base path prefix for all API routes |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
 | MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
 | MOTO_PORT | `5000` | Port of the moto server (local development only) |
@@ -169,9 +169,9 @@ The service is configured by Environment Variable:
 | SQS_QUEUE_MAX_LENGTH | `100` | Maximum number of messages in the queue before new print requests are rejected with 503. SQS has no built-in queue length limit, so this is an application-level throttle to prevent workers from being overwhelmed by a backlog they cannot process in time. |
 | EXPIRATION_TIME_HH_PRINT_DOC | `24` | Expiration time in hours before re-generating an already existing PDF |
 | TTL_DYNAMODB_ITEM_HH | `48` | Time-to-live in hours for DynamoDB items |
-| MAX_PAYLOAD_SIZE_BYTES | `102400` | Maximum allowed request payload size in bytes (default: 100 KB) |
 | AWS_CONNECT_TIMEOUT | `5` | Timeout in seconds for establishing a connection to DynamoDB/SQS |
 | AWS_READ_TIMEOUT | `30` | Timeout in seconds for reading a response from DynamoDB/SQS |
+| FORWARDED_ALLOW_IPS | `*` | uvicorn setting: which proxy IPs to trust for `X-Forwarded-*` headers (used to build absolute URLs like `reportUrl`/`pdfUrl`). Default `*` trusts any source and relies on k8s network policies; set to traefik's pod CIDR for a tighter allowlist |
 
 ### OpenTelemetry (tracing)
 
@@ -179,8 +179,9 @@ The service is configured by Environment Variable:
 | --- | ------- | ----------- |
 | OTEL_SDK_DISABLED | `false` | Set to `true` to disable all OTEL instrumentation |
 | OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
-| OTEL_ENABLE_LOGGING | `false` | Set to `true` to inject `otelTraceID` and `otelSpanID` into log records |
-| OTEL_ENABLE_BOTOCORE | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
+| OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
+| OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
+| OTEL_ENABLE_METRICS | `false` | Set to `true` to enable OTLP metrics export |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
 | OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
@@ -189,11 +190,11 @@ The service is configured by Environment Variable:
 
 #### Local tracing setup
 
-To test tracing locally, start the OTEL collector and Zipkin:
+To test tracing locally, start the OTEL collector and Jaeger:
 
 ```bash
-docker compose -f docker-compose-otel.yml up -d
+make start-otel
 ```
 
-Then start the app with `make serve`. Traces are visible at **<http://localhost:9411>** (Zipkin UI).
+Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger UI).
 

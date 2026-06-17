@@ -1,9 +1,7 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import AwareDatetime, BaseModel, Field, field_validator
-
-from app.settings import get_settings
+from pydantic import AwareDatetime, BaseModel, Field
 
 
 class JobStatus(StrEnum):
@@ -32,24 +30,26 @@ class PrintJobPayload(BaseModel):
     print_scale: int | None = Field(
         default=None, ge=1, le=5_000_000, description="Map scale denominator"
     )
-    state: str = Field(
-        description="The map state. This can be a URL to the state or the state in base64"
+    state_id: str = Field(
+        pattern=r"^[A-Za-z0-9_-]{16}$",
+        description="Identifier for the map state (16 URL-safe base64 characters)",
     )
-
-    @field_validator("state")
-    @classmethod
-    def validate_state_length(cls, v: str) -> str:
-        max_len = get_settings().max_character_size_of_state
-        if len(v) > max_len:
-            raise ValueError(f"State must not exceed {max_len} characters")
-        return v
+    print_legend: bool | None = Field(
+        default=None, description="Whether to include the legend in the print output"
+    )
+    print_grid: bool | None = Field(
+        default=None, description="Whether to overlay a grid on the map"
+    )
+    print_lang: Literal["de", "fr", "it", "en", "rm"] | None = Field(
+        default=None, description="Language for the print output"
+    )
 
 
 class JobResponse(BaseModel):
     """Returned by POST /jobs (202 or 200) and GET /jobs/{job_id} (200)."""
 
     status: JobStatus
-    reportPath: str = Field(description="Path to poll for this job's status")  # noqa: N815
+    reportUrl: str = Field(description="URL to poll for this job's status")  # noqa: N815
     created: AwareDatetime = Field(description="ISO 8601 UTC creation timestamp")
     started: AwareDatetime | None = Field(
         default=None, description="Timestamp when the renderer started processing"
@@ -57,8 +57,8 @@ class JobResponse(BaseModel):
     finished: AwareDatetime | None = Field(
         default=None, description="Timestamp when rendering completed"
     )
-    pdfPath: str | None = Field(  # noqa: N815
-        default=None, description="Path to the rendered PDF; set when status is finished"
+    pdfUrl: str | None = Field(  # noqa: N815
+        default=None, description="URL to the rendered PDF; set when status is finished"
     )
     message: str | None = Field(default=None, description="Optional status or error message")
 

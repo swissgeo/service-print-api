@@ -5,7 +5,10 @@ from botocore.exceptions import ClientError
 from app.schemas.jobs import DBJobItem
 from app.settings import get_settings
 
-API_PATH_PREFIX = get_settings().api_path_prefix
+_settings = get_settings()
+API_PATH_PREFIX = _settings.api_path_prefix
+# Matches the test client's base_url (see conftest.py), used by request.base_url.
+API_BASE_URL = "http://test"
 
 _JOB_ID = "e3cb0a487ff4cfafe59eaca4ec13d066f30f5e4b70b8dc978ba5e25636865633"
 
@@ -30,8 +33,8 @@ class TestPrintStatus:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "finished"
-        assert data["reportPath"] == f"{API_PATH_PREFIX}/jobs/{_JOB_ID}"
-        assert data["pdfPath"] == f"{API_PATH_PREFIX}/results/{_JOB_ID}.pdf"
+        assert data["reportUrl"] == f"{API_BASE_URL}{API_PATH_PREFIX}/jobs/{_JOB_ID}"
+        assert data["pdfUrl"] == f"{API_BASE_URL}{API_PATH_PREFIX}/results/{_JOB_ID}.pdf"
         assert data["message"] == "Print completed"
 
     async def test_job_found_with_missing_optional_attrs(self, client):
@@ -50,7 +53,7 @@ class TestPrintStatus:
         data = response.json()
         assert data["started"] is None
         assert data["finished"] is None
-        assert data["pdfPath"] is None
+        assert data["pdfUrl"] is None
         assert data["message"] is None
 
     async def test_job_not_found_returns_404(self, client):
