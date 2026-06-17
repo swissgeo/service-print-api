@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     # DynamoDB
     dynamodb_table_name: str = "service-print-jobs-local"
 
+    # S3 — only used to build the PDF download URL in local dev. In prod the
+    # ingress serves <api_path_prefix>/pdf/<job_id>.pdf directly from the bucket,
+    # so these are not consulted. Must match the renderer's S3_BUCKET_NAME /
+    # S3_PDF_PREFIX so the derived local URL points at the uploaded object.
+    s3_bucket_name: str = "service-print-pdf-local"
+    s3_pdf_prefix: str = "api/wps/v1/print/pdf"
+
     # SQS
     sqs_queue_name: str = "service-print-jobs-queue-local"
     sqs_queue_max_length: int = 100

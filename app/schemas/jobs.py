@@ -72,6 +72,5 @@ class DBJobItem(BaseModel):
     created_timestamp_iso_8601: AwareDatetime
     started_timestamp_iso_8601: AwareDatetime | None = None
     finished_timestamp_iso_8601: AwareDatetime | None = None
-    pdf_path: str | None = None
     message: str | None = None
     ttl: int | None = None
