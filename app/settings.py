@@ -11,7 +11,7 @@ from pydantic import field_validator
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".env"),
+        env_file=(".env", ".env.default"),
         env_file_encoding="utf-8",
         enable_decoding=False,
         extra="ignore",
@@ -66,8 +66,6 @@ class Settings(BaseSettings):
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
     otel_exporter_otlp_insecure: bool = False
     otel_exporter_otlp_headers: str = ""
-    otel_resource_attributes: str = ""
-    otel_python_excluded_urls: str = ""
 
     @property
     def moto_endpoint(self) -> str:
