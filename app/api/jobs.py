@@ -45,13 +45,26 @@ def _to_job_response(item: DBJobItem, request: Request) -> JobResponse:
     """Build a JobResponse from a DBJobItem."""
     settings = get_settings()
     base_url = str(request.base_url).rstrip("/")
+    # The renderer uploads the PDF to a deterministic key, so the URL is derived
+    # from the job_id once the job is finished rather than stored on the item.
+    # In prod the ingress serves <api_path_prefix>/pdf/<job_id>.pdf from the
+    # bucket; locally there is no such proxy, so point straight at the S3 object.
+    pdf_url = None
+    if item.status == JobStatus.FINISHED:
+        if settings.aws_local:
+            pdf_url = (
+                f"{settings.moto_endpoint}/{settings.s3_bucket_name}"
+                f"/{settings.s3_pdf_prefix}/{item.job_id}.pdf"
+            )
+        else:
+            pdf_url = f"{base_url}{settings.api_path_prefix}/pdf/{item.job_id}.pdf"
     return JobResponse(
         status=item.status,
         reportUrl=f"{base_url}{settings.api_path_prefix}/jobs/{item.job_id}",
         created=item.created_timestamp_iso_8601,
         started=item.started_timestamp_iso_8601,
         finished=item.finished_timestamp_iso_8601,
-        pdfUrl=f"{base_url}{item.pdf_path}" if item.pdf_path else None,
+        pdfUrl=pdf_url,
         message=item.message,
     )
 

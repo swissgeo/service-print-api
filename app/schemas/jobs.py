@@ -40,8 +40,8 @@ class PrintJobPayload(BaseModel):
     print_grid: bool | None = Field(
         default=None, description="Whether to overlay a grid on the map"
     )
-    print_lang: Literal["de", "fr", "it", "en", "rm"] | None = Field(
-        default=None, description="Language for the print output"
+    print_lang: Literal["de", "fr", "it", "en", "rm"] = Field(
+        description="Language for the print output"
     )
 
 
@@ -72,6 +72,5 @@ class DBJobItem(BaseModel):
     created_timestamp_iso_8601: AwareDatetime
     started_timestamp_iso_8601: AwareDatetime | None = None
     finished_timestamp_iso_8601: AwareDatetime | None = None
-    pdf_path: str | None = None
     message: str | None = None
     ttl: int | None = None

@@ -17,6 +17,7 @@ _PAYLOAD = {
     "print_resolution": 96,
     "print_scale": 25000,
     "state_id": "Htq_kVDm5FMu79Jx",
+    "print_lang": "de",
 }
 
 _JOB_ID = "684394c1bef082925d690f05f75b3e248b6a56327229475985891fee84564d75"
@@ -182,11 +183,11 @@ class TestPrintJobPayload:
         assert payload.print_format == "a4"
         assert payload.print_scale == 25000
 
-    def test_print_legend_grid_and_lang_are_optional(self):
-        payload = PrintJobPayload(**_PAYLOAD)
+    def test_print_legend_and_grid_are_optional(self):
+        data = {k: v for k, v in _PAYLOAD.items() if k not in ("print_legend", "print_grid")}
+        payload = PrintJobPayload(**data)
         assert payload.print_legend is None
         assert payload.print_grid is None
-        assert payload.print_lang is None
 
     def test_print_scale_is_optional(self):
         payload = PrintJobPayload(
@@ -194,6 +195,7 @@ class TestPrintJobPayload:
             print_orientation="portrait",
             print_resolution=96,
             state_id="deadbeefcafe0123",
+            print_lang="de",
         )
         assert payload.print_scale is None
 
@@ -261,3 +263,8 @@ class TestPrintJobPayload:
     def test_invalid_lang_raises(self):
         with pytest.raises(ValidationError, match="print_lang"):
             PrintJobPayload(**{**_PAYLOAD, "print_lang": "es"})
+
+    def test_missing_lang_raises(self):
+        data = {k: v for k, v in _PAYLOAD.items() if k != "print_lang"}
+        with pytest.raises(ValidationError, match="print_lang"):
+            PrintJobPayload(**data)

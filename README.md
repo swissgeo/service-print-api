@@ -162,6 +162,8 @@ The service is configured by Environment Variable:
 | CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
 | DYNAMODB_TABLE_NAME | `service-print-jobs-local` | The name of the DynamoDB table storing print job info |
+| S3_BUCKET_NAME | `service-print-pdf-local` | Bucket holding the rendered PDFs. Only used in local dev (`AWS_LOCAL=true`) to build a `pdfUrl` pointing directly at the moto S3 object; in prod the ingress serves `<api_path_prefix>/pdf/<job_id>.pdf` from the bucket. Must match the renderer's `S3_BUCKET_NAME`. |
+| S3_PDF_PREFIX | `api/wps/v1/print/pdf` | Key prefix under which the renderer uploads PDFs (`<prefix>/<job_id>.pdf`). Used with `S3_BUCKET_NAME` to build the local-dev `pdfUrl`. Must match the renderer's `S3_PDF_PREFIX`. |
 | SQS_QUEUE_NAME | `service-print-jobs-queue-local` | The name of the SQS queue |
 | SQS_DL_QUEUE_NAME | `service-print-jobs-dlq-local` | The name of the SQS dead-letter queue |
 | SQS_MAX_RECEIVE_COUNT | `3` | Number of times a message can be received before SQS routes it to the DLQ automatically |
