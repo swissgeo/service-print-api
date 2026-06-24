@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from app.settings import get_settings
 
 # Resource.create() reads OTEL_RESOURCE_ATTRIBUTES / OTEL_SERVICE_NAME from the environment.
-_resource = Resource.create({"service.name": "service-print-api"})
+_resource = Resource.create({"service.name": "service-print"})
 
 
 def _get_providers() -> tuple[LoggerProvider | None, TracerProvider | None]:
