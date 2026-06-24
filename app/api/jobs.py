@@ -18,7 +18,7 @@ from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=[JOBS_TAG])
 
 
 def dict_to_sha256_hash(data: dict[str, object]) -> str:
@@ -74,7 +74,6 @@ def _to_job_response(item: DBJobItem, request: Request) -> JobResponse:
     "/jobs",
     response_model=JobResponse,
     status_code=202,
-    tags=[JOBS_TAG],
     summary="Submit a new print job",
     responses={
         200: {"model": JobResponse},
@@ -146,7 +145,6 @@ async def start_print(
     "/jobs",
     response_model=ErrorResponse,
     status_code=501,
-    tags=[JOBS_TAG],
     summary="List print jobs (not implemented)",
 )
 async def print_list() -> None:
@@ -156,7 +154,6 @@ async def print_list() -> None:
 @router.get(
     "/jobs/{job_id}",
     response_model=JobResponse,
-    tags=[JOBS_TAG],
     summary="Get the status of a print job",
     responses={
         404: {"model": ErrorResponse},
