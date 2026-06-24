@@ -18,8 +18,8 @@
   - [Accessing Local AWS Services](#accessing-local-aws-services)
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
-  - [OpenTelemetry (tracing)](#opentelemetry-tracing)
-    - [Local tracing setup](#local-tracing-setup)
+  - [Observability](#observability)
+    - [Local OTEL testing](#local-otel-testing)
 
 
 
@@ -58,8 +58,8 @@ make serve
 
 Then open:
 
-- [http://localhost:3000/docs](http://localhost:3000/docs) — Swagger UI (interactive)
-- [http://localhost:3000/redoc](http://localhost:3000/redoc) — ReDoc
+- [http://localhost:3000/docs](http://localhost:3000/docs) - Swagger UI (interactive)
+- [http://localhost:3000/redoc](http://localhost:3000/redoc) - ReDoc
 
 ## Versioning
 
@@ -175,7 +175,19 @@ The service is configured by Environment Variable:
 | AWS_READ_TIMEOUT | `30` | Timeout in seconds for reading a response from DynamoDB/SQS |
 | FORWARDED_ALLOW_IPS | `*` | uvicorn setting: which proxy IPs to trust for `X-Forwarded-*` headers (used to build absolute URLs like `reportUrl`/`pdfUrl`). Default `*` trusts any source and relies on k8s network policies; set to traefik's pod CIDR for a tighter allowlist |
 
-### OpenTelemetry (tracing)
+### Observability
+
+The service supports OpenTelemetry logging, tracing, and metrics. In production, telemetry is
+exported via OTLP to an OpenTelemetry Collector (or any OTLP-compatible backend). Only the OTLP
+exporter is implemented by the application. There is no console-exporter fallback.
+
+Local development (`.env.default`) ships with OTEL **disabled**
+(`OTEL_SDK_DISABLED=true`), so `make serve` uses plain console logging for a simpler dev experience.
+Set `OTEL_SDK_DISABLED=false` to exercise the full pipeline locally (see
+[Local OTEL testing](#local-otel-testing)).
+
+Logs are exported using the OpenTelemetry `LoggerProvider`, which associates them with the active
+trace/span context.
 
 | Env | Default | Description |
 | --- | ------- | ----------- |
@@ -184,19 +196,34 @@ The service is configured by Environment Variable:
 | OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
 | OTEL_ENABLE_METRICS | `false` | Set to `true` to enable OTLP metrics export |
+| OTEL_METRIC_EXPORT_INTERVAL | `60000` | Metric export interval in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
+| OTEL_METRIC_EXPORT_TIMEOUT | `30000` | Metric export timeout in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
 | OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
 | OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
 
-#### Local tracing setup
+#### Local OTEL testing
 
-To test tracing locally, start the OTEL collector and Jaeger:
+OTEL is disabled by default locally, so first enable it in `.env`:
+
+```bash
+OTEL_SDK_DISABLED=false
+```
+
+Then start the OTEL collector and Jaeger (runs detached):
 
 ```bash
 make start-otel
 ```
 
-Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger UI).
+Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger
+UI); logs and metrics go to the collector's debug exporter: Follow them with:
+
+```bash
+docker compose -p service-print-local-otel -f docker-compose-otel.yml logs -f otel-collector
+```
+
+Stop the stack with `make stop-otel`.
 
