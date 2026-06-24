@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     # API
     api_path_prefix: str = "/api/wps/v1/print"
+    # OpenAPI docs: when False, no spec/docs are served (public or internal)
+    publish_openapi_spec: bool = False
 
     # CORS: comma-separated regex patterns, e.g. ".*" or "example\.com,localhost"
     allowed_domains: list[str] = [".*"]

@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from app.core.dynamo_db import get_print_job, insert_dynamodb
 from app.core.sqs_queue import is_queue_overloaded, send_to_queue
 from app.dependencies import SessionDep
+from app.openapi import JOBS_TAG
 from app.schemas.errors import ErrorResponse
 from app.schemas.jobs import DBJobItem, JobResponse, JobStatus, PrintJobPayload
 from app.settings import get_settings
@@ -73,7 +74,7 @@ def _to_job_response(item: DBJobItem, request: Request) -> JobResponse:
     "/jobs",
     response_model=JobResponse,
     status_code=202,
-    tags=["Jobs"],
+    tags=[JOBS_TAG],
     summary="Submit a new print job",
     responses={
         200: {"model": JobResponse},
@@ -145,7 +146,7 @@ async def start_print(
     "/jobs",
     response_model=ErrorResponse,
     status_code=501,
-    tags=["Jobs"],
+    tags=[JOBS_TAG],
     summary="List print jobs (not implemented)",
 )
 async def print_list() -> None:
@@ -155,7 +156,7 @@ async def print_list() -> None:
 @router.get(
     "/jobs/{job_id}",
     response_model=JobResponse,
-    tags=["Jobs"],
+    tags=[JOBS_TAG],
     summary="Get the status of a print job",
     responses={
         404: {"model": ErrorResponse},
