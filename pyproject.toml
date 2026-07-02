@@ -15,11 +15,13 @@ dependencies = [
     "types-aiobotocore[dynamodb,sqs]~=3.4",
     "types-pyyaml~=6.0",
     # OpenTelemetry packages
-    "opentelemetry-sdk~=1.41",
-    "opentelemetry-exporter-otlp~=1.41",
-    "opentelemetry-instrumentation-asgi==0.63b1",
-    "opentelemetry-instrumentation-botocore==0.63b1",
-    "opentelemetry-instrumentation-fastapi==0.63b1",
+    "opentelemetry-sdk~=1.43",
+    "opentelemetry-exporter-otlp~=1.43",
+    # instrumentation 0.64b0 flattens FastAPI 0.137+ _IncludedRouter nodes so
+    # OPTIONS/partial matches no longer crash; 0.63b1 lacked this (500s on OPTIONS).
+    "opentelemetry-instrumentation-asgi==0.64b0",
+    "opentelemetry-instrumentation-botocore==0.64b0",
+    "opentelemetry-instrumentation-fastapi==0.64b0",
     "fastapi[standard]~=0.138",
 ]
 
