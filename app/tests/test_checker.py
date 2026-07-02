@@ -1,10 +1,10 @@
 from app.settings import get_settings
 
-API_PATH_PREFIX = get_settings().api_path_prefix
+ROOT_PATH = get_settings().root_path
 
 
 async def test_checker(client):
-    response = await client.get(f"{API_PATH_PREFIX}/checker")
+    response = await client.get(f"{ROOT_PATH}/checker")
     assert response.status_code == 200
 
 

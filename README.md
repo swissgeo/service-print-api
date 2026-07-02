@@ -37,13 +37,14 @@ As soon as the print has been accomplished, the client recives a positive status
 
 Furthermore there exists the checker GET endpoint to test, if the server is up:
 
-The base path is configurable via the `API_PATH_PREFIX` environment variable (default: `/api/wps/v1/print`).
+The base path is configurable via the `ROOT_PATH` environment variable (default: empty; set to
+`/api/wps/v1/print` in deployment). FastAPI serves all routes and the docs under it.
 
 | Path | Method | Argument | Response Type |
 |------|--------|----------|---------------|
-| `$API_PATH_PREFIX`/checker | GET | - | application/json |
-| `$API_PATH_PREFIX`/jobs | POST | json (f.ex. post_print.sh) | application/json |
-| `$API_PATH_PREFIX`/jobs/\<job_id\> | GET | job_id | application/json |
+| `$ROOT_PATH`/checker | GET | - | application/json |
+| `$ROOT_PATH`/jobs | POST | json (f.ex. post_print.sh) | application/json |
+| `$ROOT_PATH`/jobs/\<job_id\> | GET | job_id | application/json |
 
 ## API Documentation
 
@@ -58,8 +59,10 @@ make serve
 
 Then open:
 
-- [http://localhost:3000/docs](http://localhost:3000/docs) - Swagger UI (interactive)
-- [http://localhost:3000/redoc](http://localhost:3000/redoc) - ReDoc
+- [http://localhost:3000/api/wps/v1/print/docs](http://localhost:3000/api/wps/v1/print/docs) - Swagger UI (interactive)
+- [http://localhost:3000/api/wps/v1/print/redoc](http://localhost:3000/api/wps/v1/print/redoc) - ReDoc
+
+The docs are served under `$ROOT_PATH` (set to `/api/wps/v1/print` in `.env`).
 
 ## Versioning
 
@@ -154,7 +157,7 @@ The service is configured by Environment Variable:
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
-| API_PATH_PREFIX | `/api/wps/v1/print` | Base path prefix for all API routes |
+| ROOT_PATH | `` (empty) | Base path prefix the app is mounted under behind the ingress (routes **and** docs). Set to `/api/wps/v1/print` in deployment and in local `.env` |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
 | MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
 | MOTO_PORT | `5000` | Port of the moto server (local development only) |
@@ -162,7 +165,7 @@ The service is configured by Environment Variable:
 | CACHE_CONTROL | `no-store` | `Cache-Control` header value for successful responses |
 | CACHE_CONTROL_4XX | `public, max-age=120` | `Cache-Control` header value for 4xx error responses |
 | DYNAMODB_TABLE_NAME | `service-print-jobs-local` | The name of the DynamoDB table storing print job info |
-| S3_BUCKET_NAME | `service-print-pdf-local` | Bucket holding the rendered PDFs. Only used in local dev (`AWS_LOCAL=true`) to build a `pdfUrl` pointing directly at the moto S3 object; in prod the ingress serves `<api_path_prefix>/pdf/<job_id>.pdf` from the bucket. Must match the renderer's `S3_BUCKET_NAME`. |
+| S3_BUCKET_NAME | `service-print-pdf-local` | Bucket holding the rendered PDFs. Only used in local dev (`AWS_LOCAL=true`) to build a `pdfUrl` pointing directly at the moto S3 object; in prod the ingress serves `<root_path>/pdf/<job_id>.pdf` from the bucket. Must match the renderer's `S3_BUCKET_NAME`. |
 | S3_PDF_PREFIX | `api/wps/v1/print/pdf` | Key prefix under which the renderer uploads PDFs (`<prefix>/<job_id>.pdf`). Used with `S3_BUCKET_NAME` to build the local-dev `pdfUrl`. Must match the renderer's `S3_PDF_PREFIX`. |
 | SQS_QUEUE_NAME | `service-print-jobs-queue-local` | The name of the SQS queue |
 | SQS_DL_QUEUE_NAME | `service-print-jobs-dlq-local` | The name of the SQS dead-letter queue |

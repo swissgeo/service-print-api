@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     )
 
     # API
-    api_path_prefix: str = "/api/wps/v1/print"
+    # root_path is the URL prefix the app is mounted under behind the ingress
+    # (e.g. "/api/wps/v1/print"). FastAPI serves all routes AND the docs
+    # (/docs, /redoc, /openapi.json) under it. Set via ROOT_PATH in deployment.
+    root_path: str = ""
     # OpenAPI docs: when False, no spec/docs are served (public or internal)
     publish_openapi_spec: bool = False
 
@@ -41,7 +44,7 @@ class Settings(BaseSettings):
     dynamodb_table_name: str = "service-print-jobs-local"
 
     # S3 — only used to build the PDF download URL in local dev. In prod the
-    # ingress serves <api_path_prefix>/pdf/<job_id>.pdf directly from the bucket,
+    # ingress serves <root_path>/pdf/<job_id>.pdf directly from the bucket,
     # so these are not consulted. Must match the renderer's S3_BUCKET_NAME /
     # S3_PDF_PREFIX so the derived local URL points at the uploaded object.
     s3_bucket_name: str = "service-print-pdf-local"
