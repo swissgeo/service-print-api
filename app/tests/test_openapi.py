@@ -1,7 +1,7 @@
 from app.openapi import INTERNAL_TAG, JOBS_TAG
-from app.settings import get_settings
 
-API_PATH_PREFIX = get_settings().api_path_prefix
+# With root_path set, the OpenAPI spec lists bare route paths (the prefix lives
+# in the servers URL), so paths are asserted without the root_path prefix.
 
 
 async def test_get_openapi_json(client):
@@ -28,7 +28,7 @@ async def test_get_openapi_redoc(client):
 async def test_default_spec_excludes_internal_routes(client):
     spec = (await client.get("/openapi.json")).json()
 
-    assert f"{API_PATH_PREFIX}/checker" not in spec["paths"]
+    assert "/checker" not in spec["paths"]
 
 
 async def test_default_spec_excludes_internal_tag(client):
@@ -49,13 +49,13 @@ async def test_internal_openapi_json(client):
 async def test_internal_spec_contains_checker_route(client):
     spec = (await client.get("/internal/openapi.json")).json()
 
-    assert f"{API_PATH_PREFIX}/checker" in spec["paths"]
+    assert "/checker" in spec["paths"]
 
 
 async def test_internal_spec_excludes_job_routes(client):
     spec = (await client.get("/internal/openapi.json")).json()
 
-    assert f"{API_PATH_PREFIX}/jobs" not in spec["paths"]
+    assert "/jobs" not in spec["paths"]
 
 
 async def test_internal_spec_excludes_job_tag(client):

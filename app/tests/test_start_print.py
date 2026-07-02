@@ -9,7 +9,7 @@ import pytest
 from app.schemas.jobs import DBJobItem, PrintJobPayload
 from app.settings import get_settings
 
-API_PATH_PREFIX = get_settings().api_path_prefix
+ROOT_PATH = get_settings().root_path
 
 _PAYLOAD = {
     "print_format": "a4",
@@ -36,7 +36,7 @@ class TestStartPrint:
             patch("app.api.jobs.insert_dynamodb") as mock_insert,
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 202
         data = response.json()
@@ -50,13 +50,13 @@ class TestStartPrint:
             patch("app.api.jobs.is_queue_overloaded", return_value=True),
             patch("app.api.jobs.get_print_job", return_value=None),
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 503
 
     async def test_invalid_payload_returns_400(self, client):
         response = await client.post(
-            f"{API_PATH_PREFIX}/jobs",
+            f"{ROOT_PATH}/jobs",
             content=b"null",
             headers={"Content-Type": "application/json"},
         )
@@ -79,7 +79,7 @@ class TestStartPrint:
             patch("app.api.jobs.insert_dynamodb") as mock_insert,
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 200
         mock_insert.assert_not_called()
@@ -100,7 +100,7 @@ class TestStartPrint:
             patch("app.api.jobs.insert_dynamodb") as mock_insert,
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 202
         mock_insert.assert_called_once()
@@ -120,7 +120,7 @@ class TestStartPrint:
             patch("app.api.jobs.insert_dynamodb") as mock_insert,
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 202
         mock_insert.assert_called_once()
@@ -137,7 +137,7 @@ class TestStartPrint:
             ),
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 500
         assert "error" in response.json()
@@ -154,7 +154,7 @@ class TestStartPrint:
                 ),
             ),
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 500
         assert "error" in response.json()
@@ -170,7 +170,7 @@ class TestStartPrint:
             patch("app.api.jobs.insert_dynamodb") as mock_insert,
             patch("app.api.jobs.send_to_queue") as mock_send,
         ):
-            response = await client.post(f"{API_PATH_PREFIX}/jobs", json=_PAYLOAD)
+            response = await client.post(f"{ROOT_PATH}/jobs", json=_PAYLOAD)
 
         assert response.status_code == 202
         mock_insert.assert_called_once()

@@ -58,6 +58,7 @@ app = FastAPI(
         "identifier": "BSD-3-Clause",
     },
     openapi_url=get_openapi_spec_url(),
+    root_path=settings.root_path,
     openapi_tags=[
         {"name": INTERNAL_TAG, "description": "Internal APIs not for external uses"},
         {"name": JOBS_TAG, "description": "Print Job Operations"},
@@ -80,7 +81,7 @@ app.add_middleware(
 
 initialize_instrumentation(app)
 
-app.include_router(jobs_router, prefix=settings.api_path_prefix)
+app.include_router(jobs_router)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -124,7 +125,7 @@ async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
 
 
 @app.get(
-    f"{settings.api_path_prefix}/checker",
+    "/checker",
     response_model=CheckerResponse,
     tags=[INTERNAL_TAG],
     summary="Health check",
