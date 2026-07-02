@@ -3,7 +3,6 @@ import logging.config
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from http import HTTPStatus
-from typing import Any
 
 import aioboto3
 import yaml
@@ -11,10 +10,10 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from app.api.jobs import router as jobs_router
+from app.openapi import INTERNAL_TAG, JOBS_TAG, get_openapi_spec_url, setup_openapi
 from app.otel import initialize_instrumentation, shutdown_otel
 from app.schemas.checker import CheckerResponse
 from app.schemas.errors import ErrorDetail, ErrorResponse
@@ -34,32 +33,6 @@ if settings.logging_enable_dev_server_logging:  # pragma: no cover
 if settings.logging_handlers_level is not None:  # pragma: no cover
     for handler in logging.getLogger().handlers:
         handler.setLevel(settings.logging_handlers_level)
-
-
-def _customize_openapi(app: FastAPI) -> None:
-    """Remove the 422 responses FastAPI adds by default — they are replaced by 400."""
-
-    def custom_openapi() -> dict[str, Any]:
-        if app.openapi_schema:
-            return app.openapi_schema  # pragma: no cover
-        app.openapi_schema = get_openapi(
-            title=app.title,
-            version=app.version,
-            openapi_version=app.openapi_version,
-            description=app.description,
-            terms_of_service=app.terms_of_service,
-            contact=app.contact,
-            license_info=app.license_info,
-            routes=app.routes,
-            tags=app.openapi_tags,
-            servers=app.servers,
-        )
-        for method_item in app.openapi_schema.get("paths", {}).values():
-            for param in method_item.values():
-                param.get("responses", {}).pop("422", None)
-        return app.openapi_schema
-
-    app.openapi = custom_openapi  # ty:ignore[invalid-assignment]
 
 
 @asynccontextmanager
@@ -84,10 +57,16 @@ app = FastAPI(
         "name": "BSD 3-Clause License",
         "identifier": "BSD-3-Clause",
     },
+    openapi_url=get_openapi_spec_url(),
+    openapi_tags=[
+        {"name": INTERNAL_TAG, "description": "Internal APIs not for external uses"},
+        {"name": JOBS_TAG, "description": "Print Job Operations"},
+    ],
     lifespan=lifespan,
 )
 
-_customize_openapi(app)
+if settings.publish_openapi_spec:  # pragma: no cover
+    setup_openapi(app)
 
 # CORS — allow_origin_regex matches the full origin URL against the pattern.
 # For local dev ALLOWED_DOMAINS=.* expands to (.*) which matches any origin.
@@ -147,7 +126,7 @@ async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
 @app.get(
     f"{settings.api_path_prefix}/checker",
     response_model=CheckerResponse,
-    tags=["Internal"],
+    tags=[INTERNAL_TAG],
     summary="Health check",
 )
 async def checker() -> CheckerResponse:

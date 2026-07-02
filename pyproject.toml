@@ -17,10 +17,10 @@ dependencies = [
     # OpenTelemetry packages
     "opentelemetry-sdk~=1.41",
     "opentelemetry-exporter-otlp~=1.41",
-    "opentelemetry-instrumentation-asgi==0.62b1",
-    "opentelemetry-instrumentation-botocore==0.62b1",
-    "opentelemetry-instrumentation-fastapi==0.62b1",
-    "fastapi[standard]~=0.136",
+    "opentelemetry-instrumentation-asgi==0.63b1",
+    "opentelemetry-instrumentation-botocore==0.63b1",
+    "opentelemetry-instrumentation-fastapi==0.63b1",
+    "fastapi[standard]~=0.138",
 ]
 
 [dependency-groups]
