@@ -106,7 +106,7 @@ EXPOSE 8000
 # pod. Override at deploy time with traefik's pod CIDR for a tighter allowlist.
 ENV FORWARDED_ALLOW_IPS=*
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers", "--loop", "uvloop", "--http", "httptools"]
 
 
 ###########################################################
@@ -150,4 +150,4 @@ EXPOSE 8000
 # pod. Override at deploy time with traefik's pod CIDR for a tighter allowlist.
 ENV FORWARDED_ALLOW_IPS=*
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--proxy-headers", "--loop", "uvloop", "--http", "httptools"]

@@ -2102,6 +2102,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "gevent" },
     { name = "gunicorn" },
+    { name = "httptools" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-asgi" },
     { name = "opentelemetry-instrumentation-botocore" },
@@ -2112,6 +2113,7 @@ dependencies = [
     { name = "pyyaml" },
     { name = "types-aiobotocore", extra = ["dynamodb", "sqs"] },
     { name = "types-pyyaml" },
+    { name = "uvloop" },
 ]
 
 [package.dev-dependencies]
@@ -2134,6 +2136,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = "~=0.138" },
     { name = "gevent", specifier = "~=26.5" },
     { name = "gunicorn", specifier = "~=25.0" },
+    { name = "httptools", specifier = "~=0.8.0" },
     { name = "opentelemetry-exporter-otlp", specifier = "~=1.43" },
     { name = "opentelemetry-instrumentation-asgi", specifier = "==0.64b0" },
     { name = "opentelemetry-instrumentation-botocore", specifier = "==0.64b0" },
@@ -2144,6 +2147,7 @@ requires-dist = [
     { name = "pyyaml", specifier = "~=6.0" },
     { name = "types-aiobotocore", extras = ["dynamodb", "sqs"], specifier = "~=3.4" },
     { name = "types-pyyaml", specifier = "~=6.0" },
+    { name = "uvloop", specifier = "~=0.22.1" },
 ]
 
 [package.metadata.requires-dev]
