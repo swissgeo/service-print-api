@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.core.dynamo_db import get_print_job, insert_dynamodb
+from app.core.metrics import record_job_created
 from app.core.sqs_queue import is_queue_overloaded, send_to_queue
 from app.dependencies import SessionDep
 from app.openapi import JOBS_TAG
@@ -133,6 +134,8 @@ async def start_print(
     except ClientError:
         logger.exception("Error sending item to SQS queue")
         raise HTTPException(status_code=500, detail="Error sending print job to queue") from None
+
+    record_job_created()
 
     base_url = str(request.base_url).rstrip("/")
     return JobResponse(

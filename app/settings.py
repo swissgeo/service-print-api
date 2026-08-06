@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     otel_enable_fastapi: bool = False
     otel_enable_boto: bool = False
     otel_enable_otlp_exporter: bool = True
-    otel_enable_metrics: bool = False
+    otel_enable_metrics: bool = True
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
     otel_exporter_otlp_insecure: bool = False
     otel_exporter_otlp_headers: str = ""

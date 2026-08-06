@@ -19,6 +19,7 @@
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
   - [Observability](#observability)
+    - [Metrics](#metrics)
     - [Local OTEL testing](#local-otel-testing)
 
 
@@ -198,7 +199,7 @@ trace/span context.
 | OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
 | OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
-| OTEL_ENABLE_METRICS | `false` | Set to `true` to enable OTLP metrics export |
+| OTEL_ENABLE_METRICS | `true` | Set to `false` to disable OTLP metrics export |
 | OTEL_METRIC_EXPORT_INTERVAL | `60000` | Metric export interval in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_METRIC_EXPORT_TIMEOUT | `30000` | Metric export timeout in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
@@ -206,6 +207,73 @@ trace/span context.
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
 | OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
+
+#### Metrics
+
+Instruments live under the
+`swissgeo.service_print.*` namespace; this API's are defined in
+[app/core/metrics.py](app/core/metrics.py) (`scope.name = app.core.metrics`,
+`scope.version = 1.0.0`). Bump `METRICS_SCHEMA_VERSION` on any schema change.
+
+| Metric | Type | Unit | Attributes | Description |
+| --- | --- | --- | --- | --- |
+| `swissgeo.service_print.queue.depth` | Gauge | `{message}` | - | Approximate number of messages in the SQS print queue, sampled when `POST /jobs` checks queue length |
+| `swissgeo.service_print.jobs` | Counter | `{job}` | `outcome` = `created` | A job accepted and enqueued by `POST /jobs`. The renderer emits every other `outcome` under this same instrument name |
+
+Request volume and status/outcome splits for `POST /jobs` and `GET /jobs/{job_id}` are
+intentionally **not** custom metrics: the default `http.server.duration` from the FastAPI
+instrumentation already carries `http.route` and `http.response.status_code`, from which those
+counts are derivable. `created` is not a request count either — it excludes deduplicated
+re-requests (200), overload rejections (503) and failed enqueues, so it counts exactly the jobs
+the renderer will eventually pick up.
+
+##### Example queries
+
+OTEL names are rewritten on the way into Prometheus: `.` becomes `_`, counters gain `_total`,
+and annotation units (`{message}`) are dropped. Both services share the label
+`job="service-print"` (from `service.name`); `otel_scope_name="app.core.metrics"` isolates this
+API's instruments from the renderer's.
+
+```promql
+# Current SQS queue depth (sampled on each POST /jobs)
+swissgeo_service_print_queue_depth
+
+# Peak queue depth over the last hour
+max_over_time(swissgeo_service_print_queue_depth[1h])
+
+# Jobs created per second
+sum(rate(swissgeo_service_print_jobs_total{outcome="created"}[5m]))
+
+# Is the renderer keeping up? Sustained > 0 means jobs are accumulating
+  sum(rate(swissgeo_service_print_jobs_total{outcome="created"}[5m]))
+- sum(rate(swissgeo_service_print_jobs_total{outcome="started"}[5m]))
+
+# Print requests per second, split by status
+# (202 = queued, 200 = duplicate, 503 = queue overloaded, 500 = error)
+sum by (http_response_status_code) (
+  rate(http_server_duration_seconds_count{http_route="/jobs"}[5m]))
+
+# Get-print-status volume
+sum(rate(http_server_duration_seconds_count{http_route="/jobs/{job_id}"}[5m]))
+
+# p95 API latency by route
+histogram_quantile(0.95,
+  sum by (le, http_route) (rate(http_server_duration_seconds_bucket[5m])))
+```
+
+Three caveats:
+
+- `queue.depth` is only sampled while `POST /jobs` requests arrive, since it piggybacks the
+  queue-length read `is_queue_overloaded` already makes. With no traffic the series goes stale;
+  CloudWatch remains the continuous source of truth.
+- **`created - started` is not the queue backlog.** Both are per-process cumulative counters that
+  reset independently when the API and the renderer restart, and `increase()` extrapolates at
+  window edges. Compare them as *rates* to see whether the renderer keeps up; read the backlog
+  itself off `queue.depth` or CloudWatch.
+- The exact `http.server.duration` series name depends on the instrumentation version (older
+  semconv exports `http_server_duration_milliseconds_*`, newer
+  `http_server_request_duration_seconds_*`). Confirm the name in Prometheus before wiring a
+  dashboard to it. These series exist only while `OTEL_ENABLE_FASTAPI=true`.
 
 #### Local OTEL testing
 
@@ -215,18 +283,24 @@ OTEL is disabled by default locally, so first enable it in `.env`:
 OTEL_SDK_DISABLED=false
 ```
 
-Then start the OTEL collector and Jaeger (runs detached):
+Then start the OTEL collector, Jaeger and Prometheus (runs detached):
 
 ```bash
 make start-otel
 ```
 
 Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger
-UI); logs and metrics go to the collector's debug exporter: Follow them with:
+UI) and metrics (e.g. `swissgeo_service_print_queue_depth`) at
+**<http://localhost:9090>** (Prometheus UI); logs and metrics also go to the collector's debug
+exporter: Follow them with:
 
 ```bash
 docker compose -p service-print-local-otel -f docker-compose-otel.yml logs -f otel-collector
 ```
 
 Stop the stack with `make stop-otel`.
+
+> The OTEL stack (collector, Jaeger, Prometheus) is shared with `service-print-renderer` via the
+> `service-print-local-otel` compose project — the compose file is identical in both repos, so
+> `make start-otel` from either service brings up (or reuses) the same containers.
 
