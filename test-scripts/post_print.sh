@@ -3,6 +3,8 @@
 state_id=$(head -c 12 /dev/urandom | basenc --base64url)
 state_id=i7ufGBFB5TUN7gnS
 state_id=h7QR2FvzA5Kx56qq
+#state_id=Tonx_WuUmh3vvrqy
+#state_id=kFiUYEdxvqTW-uCF
 #body=$(printf '{"print_format":"a4","print_orientation":"landscape","print_resolution":96,"print_scale":25000,"state_id":"%s","print_legend":true,"print_grid":false,"print_lang":"de"}' "${state_id}")
 body=$(printf '{"print_format":"a4","print_orientation":"portrait","print_resolution":96,"print_scale":25000,"state_id":"%s","print_legend":true,"print_grid":false,"print_lang":"de"}' "${state_id}")
 

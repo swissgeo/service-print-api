@@ -101,6 +101,12 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # ruff ignore per files
 [tool.ruff.lint.per-file-ignores]
 
+"test-scripts/**" = [
+    "T201",   # Ignore print: these are command-line scripts, stdout is the UI
+    "S311",   # Ignore non-cryptographic random: it only shapes fake payloads
+    "INP001", # Ignore implicit namespace packages in scripts
+]
+
 "app/tests/**" = [
     "S101",    # Ignore usage of assert statements in tests
     "ANN201",  # Ignore missing return type hints in tests

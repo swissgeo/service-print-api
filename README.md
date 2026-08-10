@@ -205,8 +205,9 @@ trace/span context.
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
 | OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
-| OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
+| OTEL_RESOURCE_ATTRIBUTES | - | Extra resource attributes attached to all telemetry. `service.name` is ignored (pinned to `service-print` in code); `service.instance.id` overrides the hostname default |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
+| OTEL_SEMCONV_STABILITY_OPT_IN | `http` | Selects the HTTP semantic conventions of the auto-instrumentation. Unset means the pre-1.23 ones (`http.server.duration` in ms); `http` the stable ones (`http.server.request.duration` in seconds); `http/dup` emits both. Read directly from the process env by the instrumentation, not through `settings.py` |
 
 #### Metrics
 
@@ -221,7 +222,7 @@ Instruments live under the
 | `swissgeo.service_print.jobs` | Counter | `{job}` | `outcome` = `created` | A job accepted and enqueued by `POST /jobs`. The renderer emits every other `outcome` under this same instrument name |
 
 Request volume and status/outcome splits for `POST /jobs` and `GET /jobs/{job_id}` are
-intentionally **not** custom metrics: the default `http.server.duration` from the FastAPI
+intentionally **not** custom metrics: the default `http.server.request.duration` from the FastAPI
 instrumentation already carries `http.route` and `http.response.status_code`, from which those
 counts are derivable. `created` is not a request count either — it excludes deduplicated
 re-requests (200), overload rejections (503) and failed enqueues, so it counts exactly the jobs
@@ -251,17 +252,17 @@ sum(rate(swissgeo_service_print_jobs_total{outcome="created"}[5m]))
 # Print requests per second, split by status
 # (202 = queued, 200 = duplicate, 503 = queue overloaded, 500 = error)
 sum by (http_response_status_code) (
-  rate(http_server_duration_seconds_count{http_route="/jobs"}[5m]))
+  rate(http_server_request_duration_seconds_count{http_route="/jobs"}[5m]))
 
 # Get-print-status volume
-sum(rate(http_server_duration_seconds_count{http_route="/jobs/{job_id}"}[5m]))
+sum(rate(http_server_request_duration_seconds_count{http_route="/jobs/{job_id}"}[5m]))
 
 # p95 API latency by route
 histogram_quantile(0.95,
-  sum by (le, http_route) (rate(http_server_duration_seconds_bucket[5m])))
+  sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))
 ```
 
-Three caveats:
+Four caveats:
 
 - `queue.depth` is only sampled while `POST /jobs` requests arrive, since it piggybacks the
   queue-length read `is_queue_overloaded` already makes. With no traffic the series goes stale;
@@ -270,10 +271,15 @@ Three caveats:
   reset independently when the API and the renderer restart, and `increase()` extrapolates at
   window edges. Compare them as *rates* to see whether the renderer keeps up; read the backlog
   itself off `queue.depth` or CloudWatch.
-- The exact `http.server.duration` series name depends on the instrumentation version (older
-  semconv exports `http_server_duration_milliseconds_*`, newer
-  `http_server_request_duration_seconds_*`). Confirm the name in Prometheus before wiring a
-  dashboard to it. These series exist only while `OTEL_ENABLE_FASTAPI=true`.
+- The HTTP series above exist only while `OTEL_ENABLE_FASTAPI=true`, and their names depend on
+  `OTEL_SEMCONV_STABILITY_OPT_IN`. With it unset the instrumentation falls back to the pre-1.23
+  conventions — `http_server_duration_milliseconds_*`, labelled `http_target` and
+  `http_status_code` rather than `http_route` and `http_response_status_code` — and every query
+  above misses. Deployments must set it, not just `.env`.
+- The AWS instrumentation (`OTEL_ENABLE_BOTO`) emits **spans only**. There are no client-side
+  DynamoDB or SQS metrics; `opentelemetry-instrumentation-botocore` defines instruments for its
+  Bedrock extension alone. Latency or error rates for those calls would have to be custom
+  instruments in [app/core/metrics.py](app/core/metrics.py).
 
 #### Local OTEL testing
 

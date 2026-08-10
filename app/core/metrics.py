@@ -5,9 +5,10 @@ in app.otel. When metrics are disabled (no provider configured) they resolve to
 no-op proxies, so the ``record_*`` helpers are always safe to call.
 
 Request volume and status/outcome splits for POST /jobs and GET /jobs/{job_id}
-are intentionally NOT custom metrics: the default ``http.server.duration`` from
-the FastAPI instrumentation already carries ``http.route`` and
-``http.response.status_code``, from which those counts are derivable.
+are intentionally NOT custom metrics: the default
+``http.server.request.duration`` from the FastAPI instrumentation already carries
+``http.route`` and ``http.response.status_code``, from which those counts are
+derivable.
 
 ``scope.version`` (METRICS_SCHEMA_VERSION) is the version of the metric schema
 emitted under this scope — bump it on any schema change (semver).
