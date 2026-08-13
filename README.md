@@ -218,7 +218,6 @@ Instruments live under the
 
 | Metric | Type | Unit | Attributes | Description |
 | --- | --- | --- | --- | --- |
-| `swissgeo.service_print.queue.depth` | Gauge | `{message}` | - | Approximate number of messages in the SQS print queue, sampled when `POST /jobs` checks queue length |
 | `swissgeo.service_print.jobs` | Counter | `{job}` | `outcome` = `created` | A job accepted and enqueued by `POST /jobs`. The renderer emits every other `outcome` under this same instrument name |
 
 Request volume and status/outcome splits for `POST /jobs` and `GET /jobs/{job_id}` are
@@ -228,6 +227,10 @@ counts are derivable. `created` is not a request count either — it excludes de
 re-requests (200), overload rejections (503) and failed enqueues, so it counts exactly the jobs
 the renderer will eventually pick up.
 
+**Queue state is not measured here.** Queue depth comes from the SQS metrics AWS publishes to
+CloudWatch, not from this API — see `METRICS.md` §1 and §4 in the `service-print-renderer` repo
+for why, and for what is needed to make them available.
+
 ##### Example queries
 
 OTEL names are rewritten on the way into Prometheus: `.` becomes `_`, counters gain `_total`,
@@ -236,12 +239,6 @@ and annotation units (`{message}`) are dropped. Both services share the label
 API's instruments from the renderer's.
 
 ```promql
-# Current SQS queue depth (sampled on each POST /jobs)
-swissgeo_service_print_queue_depth
-
-# Peak queue depth over the last hour
-max_over_time(swissgeo_service_print_queue_depth[1h])
-
 # Jobs created per second
 sum(rate(swissgeo_service_print_jobs_total{outcome="created"}[5m]))
 
@@ -262,15 +259,12 @@ histogram_quantile(0.95,
   sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))
 ```
 
-Four caveats:
+Three caveats:
 
-- `queue.depth` is only sampled while `POST /jobs` requests arrive, since it piggybacks the
-  queue-length read `is_queue_overloaded` already makes. With no traffic the series goes stale;
-  CloudWatch remains the continuous source of truth.
 - **`created - started` is not the queue backlog.** Both are per-process cumulative counters that
   reset independently when the API and the renderer restart, and `increase()` extrapolates at
   window edges. Compare them as *rates* to see whether the renderer keeps up; read the backlog
-  itself off `queue.depth` or CloudWatch.
+  itself off the CloudWatch queue metrics.
 - The HTTP series above exist only while `OTEL_ENABLE_FASTAPI=true`, and their names depend on
   `OTEL_SEMCONV_STABILITY_OPT_IN`. With it unset the instrumentation falls back to the pre-1.23
   conventions — `http_server_duration_milliseconds_*`, labelled `http_target` and
@@ -296,7 +290,7 @@ make start-otel
 ```
 
 Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger
-UI) and metrics (e.g. `swissgeo_service_print_queue_depth`) at
+UI) and metrics (e.g. `swissgeo_service_print_jobs_total`) at
 **<http://localhost:9090>** (Prometheus UI); logs and metrics also go to the collector's debug
 exporter: Follow them with:
 

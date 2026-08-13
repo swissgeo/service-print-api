@@ -7,7 +7,6 @@ from typing import Any
 import aioboto3
 
 from app.core.aws import botocore_config
-from app.core.metrics import record_queue_depth
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -36,7 +35,6 @@ async def is_queue_overloaded(session: aioboto3.Session) -> bool:
             AttributeNames=["ApproximateNumberOfMessages"],
         )
         length = int(response["Attributes"]["ApproximateNumberOfMessages"])
-        record_queue_depth(length)
         logger.debug(
             "SQS queue %s has %d messages (max: %d)",
             settings.sqs_queue_name,

@@ -10,6 +10,9 @@ are intentionally NOT custom metrics: the default
 ``http.route`` and ``http.response.status_code``, from which those counts are
 derivable.
 
+Queue state (backlog, DLQ arrivals) is deliberately not measured here either — it
+comes from CloudWatch, see METRICS.md §1 and §4 in the renderer repo.
+
 ``scope.version`` (METRICS_SCHEMA_VERSION) is the version of the metric schema
 emitted under this scope — bump it on any schema change (semver).
 """
@@ -19,15 +22,6 @@ from opentelemetry import metrics
 METRICS_SCHEMA_VERSION = "1.0.0"
 meter = metrics.get_meter(__name__, METRICS_SCHEMA_VERSION)
 
-# Sampled whenever POST /jobs checks the queue length for overload protection, so
-# it reuses the SQS read already made — no extra AWS calls. Only updated while
-# print requests arrive; CloudWatch remains the continuous source of truth.
-_queue_depth = meter.create_gauge(
-    "swissgeo.service_print.queue.depth",
-    unit="{message}",
-    description="Approximate number of messages in the SQS print queue",
-)
-
 # The same instrument name is defined in the renderer (scope app.helpers.metrics),
 # which emits every other outcome. Name, unit and description must stay identical
 # across the two scopes, or Prometheus sees conflicting HELP text for one series.
@@ -36,11 +30,6 @@ _jobs = meter.create_counter(
     unit="{job}",
     description="Print jobs, labelled by lifecycle outcome",
 )
-
-
-def record_queue_depth(length: int) -> None:
-    """Record the approximate SQS queue depth."""
-    _queue_depth.set(length)
 
 
 def record_job_created() -> None:
