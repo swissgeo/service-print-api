@@ -198,14 +198,15 @@ trace/span context.
 | OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
 | OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
-| OTEL_ENABLE_METRICS | `false` | Set to `true` to enable OTLP metrics export |
+| OTEL_ENABLE_METRICS | `true` | Set to `false` to disable OTLP metrics export |
 | OTEL_METRIC_EXPORT_INTERVAL | `60000` | Metric export interval in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_METRIC_EXPORT_TIMEOUT | `30000` | Metric export timeout in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
 | OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
-| OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
+| OTEL_RESOURCE_ATTRIBUTES | - | Extra resource attributes attached to all telemetry. `service.name` is ignored (pinned to `service-print` in code); `service.instance.id` overrides the hostname default |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
+| OTEL_SEMCONV_STABILITY_OPT_IN | `http` | Selects the HTTP semantic conventions of the auto-instrumentation. Unset means the pre-1.23 ones (`http.server.duration` in ms); `http` the stable ones (`http.server.request.duration` in seconds); `http/dup` emits both. Read directly from the process env by the instrumentation, not through `settings.py` |
 
 #### Local OTEL testing
 
@@ -215,18 +216,23 @@ OTEL is disabled by default locally, so first enable it in `.env`:
 OTEL_SDK_DISABLED=false
 ```
 
-Then start the OTEL collector and Jaeger (runs detached):
+Then start the OTEL collector, Jaeger and Prometheus (runs detached):
 
 ```bash
 make start-otel
 ```
 
 Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger
-UI); logs and metrics go to the collector's debug exporter: Follow them with:
+UI) and metrics at **<http://localhost:9090>** (Prometheus UI); logs and metrics also go to the
+collector's debug exporter: Follow them with:
 
 ```bash
 docker compose -p service-print-local-otel -f docker-compose-otel.yml logs -f otel-collector
 ```
 
 Stop the stack with `make stop-otel`.
+
+> The OTEL stack (collector, Jaeger, Prometheus) is shared with `service-print-renderer` via the
+> `service-print-local-otel` compose project — the compose file is identical in both repos, so
+> `make start-otel` from either service brings up (or reuses) the same containers.
 
