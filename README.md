@@ -19,6 +19,8 @@
   - [Updating Packages](#updating-packages)
 - [Deployment configuration](#deployment-configuration)
   - [Observability](#observability)
+    - [Metrics](#metrics)
+      - [Example queries](#example-queries)
     - [Local OTEL testing](#local-otel-testing)
 
 
@@ -157,7 +159,7 @@ The service is configured by Environment Variable:
 | Env         | Default               | Description                            |
 |-------------|-----------------------|----------------------------------------|
 | HTTP_PORT | `3000` | Port the HTTP server listens on |
-| ROOT_PATH | `` (empty) | Base path prefix the app is mounted under behind the ingress (routes **and** docs). Set to `/api/wps/v1/print` in deployment and in local `.env` |
+| ROOT_PATH | `""` | Base path prefix the app is mounted under behind the ingress (routes **and** docs). Set to `/api/wps/v1/print` in deployment and in local `.env` |
 | AWS_LOCAL | `false` | Set to `true` to point AWS clients at the moto server instead of real AWS |
 | MOTO_HOST | `localhost` | Hostname of the moto server (local development only) |
 | MOTO_PORT | `5000` | Port of the moto server (local development only) |
@@ -198,14 +200,64 @@ trace/span context.
 | OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
 | OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
-| OTEL_ENABLE_METRICS | `false` | Set to `true` to enable OTLP metrics export |
+| OTEL_ENABLE_METRICS | `true` | Set to `false` to disable OTLP metrics export |
 | OTEL_METRIC_EXPORT_INTERVAL | `60000` | Metric export interval in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_METRIC_EXPORT_TIMEOUT | `30000` | Metric export timeout in ms (read by the OTEL SDK; only relevant when metrics are enabled) |
 | OTEL_EXPORTER_OTLP_ENDPOINT | `http://localhost:4317` | OTLP gRPC endpoint of the collector |
 | OTEL_EXPORTER_OTLP_INSECURE | `false` | Set to `true` to use an insecure (non-TLS) connection to the collector |
 | OTEL_EXPORTER_OTLP_HEADERS | - | Optional headers to send to the OTLP collector (e.g. for authentication) |
-| OTEL_RESOURCE_ATTRIBUTES | - | Resource attributes attached to all spans (e.g. `service.name=service-print-api`) |
+| OTEL_RESOURCE_ATTRIBUTES | - | Extra resource attributes attached to all telemetry. `service.name` is ignored here (pinned to `service-print` in code) |
 | OTEL_PYTHON_EXCLUDED_URLS | - | Comma-separated list of URL patterns to exclude from tracing (e.g. `checker`) |
+| OTEL_SEMCONV_STABILITY_OPT_IN | `http` | Selects the HTTP semantic conventions of the auto-instrumentation. Unset means the pre-1.23 ones (`http.server.duration` in ms); `http` the stable ones (`http.server.request.duration` in seconds); `http/dup` emits both. Read directly from the process env by the instrumentation, not through `settings.py` |
+
+#### Metrics
+
+Instruments follow the OpenTelemetry [semantic conventions for messaging
+metrics](https://opentelemetry.io/docs/specs/semconv/messaging/messaging-metrics/) and are defined
+in [app/core/metrics.py](app/core/metrics.py) (`scope.name = app.core.metrics`,
+`scope.version = 1.0.0`). Bump `METRICS_SCHEMA_VERSION` on any schema change.
+
+| Metric | Type | Unit | Attributes | Description |
+| --- | --- | --- | --- | --- |
+| `messaging.client.sent.messages` | Counter | `{message}` | `messaging.operation.name` = `print`, `messaging.system` = `aws_sqs`, `error.type` = `sqs-send-error` (on failure only) | Print jobs this API attempted to enqueue on SQS. One message is one print job |
+
+Name, unit and description are not written out as literals. They come from
+`opentelemetry-semantic-conventions`, so a spec update propagates on the next dependency bump.
+`messaging.operation.name` is the *domain* operation (`print`), not the SQS API call.
+
+The counter counts **attempts**, so the success rate is the total minus the `error.type` series.
+It is not a request count: deduplicated re-requests (200) and overload rejections (503) never
+reach the queue and are not counted, so the series without `error.type` is exactly the set of jobs
+the renderer will eventually pick up.
+
+This is the service's only custom metric, and is meant to stay that way: HTTP request volume,
+status and latency already come from the FastAPI auto-instrumentation, and queue depth from the
+SQS metrics AWS publishes to CloudWatch. Neither needs an instrument here.
+
+##### Example queries
+
+OTEL names are rewritten on the way into Prometheus: `.` becomes `_`, counters gain `_total`,
+and annotation units (`{message}`) are dropped. So the metric above is
+`messaging_client_sent_messages_total`. Both services share the label `job="service-print"` (from
+`service.name`); `otel_scope_name="app.core.metrics"` isolates this API's instruments from the
+renderer's.
+
+```promql
+# Raw count since the process started -- use this to check a job was counted at all
+messaging_client_sent_messages_total{otel_scope_name="app.core.metrics"}
+
+# Approximate jobs enqueued over the last hour (extrapolated, see caveats below)
+sum(increase(messaging_client_sent_messages_total{
+  otel_scope_name="app.core.metrics", error_type=""}[1h]))
+
+# Print jobs enqueued per second (successful sends only)
+sum(rate(messaging_client_sent_messages_total{
+  otel_scope_name="app.core.metrics", error_type=""}[5m]))
+
+# Enqueue failure ratio
+  sum(rate(messaging_client_sent_messages_total{otel_scope_name="app.core.metrics", error_type!=""}[5m]))
+/ sum(rate(messaging_client_sent_messages_total{otel_scope_name="app.core.metrics"}[5m]))
+```
 
 #### Local OTEL testing
 
@@ -215,18 +267,24 @@ OTEL is disabled by default locally, so first enable it in `.env`:
 OTEL_SDK_DISABLED=false
 ```
 
-Then start the OTEL collector and Jaeger (runs detached):
+Then start the OTEL collector, Jaeger and Prometheus (runs detached):
 
 ```bash
 make start-otel
 ```
 
 Then start the app with `make serve`. Traces are visible at **<http://localhost:16686>** (Jaeger
-UI); logs and metrics go to the collector's debug exporter: Follow them with:
+UI) and metrics (e.g. `messaging_client_sent_messages_total`) at
+**<http://localhost:9090>** (Prometheus UI); logs and metrics also go to the collector's debug
+exporter: Follow them with:
 
 ```bash
 docker compose -p service-print-local-otel -f docker-compose-otel.yml logs -f otel-collector
 ```
 
 Stop the stack with `make stop-otel`.
+
+> The OTEL stack (collector, Jaeger, Prometheus) is shared with `service-print-renderer` via the
+> `service-print-local-otel` compose project — the compose file is identical in both repos, so
+> `make start-otel` from either service brings up (or reuses) the same containers.
 

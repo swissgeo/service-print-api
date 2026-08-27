@@ -19,7 +19,9 @@ from fastapi import FastAPI
 
 from app.settings import get_settings
 
-# Resource.create() reads OTEL_RESOURCE_ATTRIBUTES / OTEL_SERVICE_NAME from the environment.
+# Resource.create() reads OTEL_RESOURCE_ATTRIBUTES / OTEL_SERVICE_NAME from the
+# environment, but attributes passed here win: service.name is pinned because this
+# API and the renderer are two processes of one logical service.
 _resource = Resource.create({"service.name": "service-print"})
 
 

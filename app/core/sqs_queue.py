@@ -7,6 +7,7 @@ from typing import Any
 import aioboto3
 
 from app.core.aws import botocore_config
+from app.core.metrics import SQS_SEND_ERROR, record_message_sent
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -47,10 +48,18 @@ async def is_queue_overloaded(session: aioboto3.Session) -> bool:
 async def send_to_queue(message: dict[str, Any], session: aioboto3.Session) -> None:
     """Serialize message to JSON and send it to the configured SQS queue."""
     settings = get_settings()
-    async with _sqs_client(session) as sqs:
-        queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
-        await sqs.send_message(
-            QueueUrl=queue_url,
-            MessageBody=json.dumps(message),
-        )
-        logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
+    # The metrics counter is recorded here rather than at the call site so that it covers
+    # every way the enqueue can fail, not only the ClientError the caller handles.
+    try:
+        async with _sqs_client(session) as sqs:
+            queue_url = (await sqs.get_queue_url(QueueName=settings.sqs_queue_name))["QueueUrl"]
+            await sqs.send_message(
+                QueueUrl=queue_url,
+                MessageBody=json.dumps(message),
+            )
+            logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
+    except Exception:
+        record_message_sent(error_type=SQS_SEND_ERROR)
+        raise
+    else:
+        record_message_sent()
