@@ -64,7 +64,7 @@ class Settings(BaseSettings):
 
     # OTEL
     otel_sdk_disabled: bool = False
-    otel_enable_fastapi: bool = False
+    otel_enable_fastapi: bool = True
     otel_enable_boto: bool = False
     otel_enable_otlp_exporter: bool = True
     otel_enable_metrics: bool = True

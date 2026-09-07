@@ -197,7 +197,7 @@ trace/span context.
 | Env | Default | Description |
 | --- | ------- | ----------- |
 | OTEL_SDK_DISABLED | `false` | Set to `true` to disable all OTEL instrumentation |
-| OTEL_ENABLE_FASTAPI | `false` | Set to `true` to enable automatic tracing of FastAPI HTTP requests |
+| OTEL_ENABLE_FASTAPI | `true` | Set to `false` to disable the FastAPI HTTP auto-instrumentation (request spans + `http.server.request.duration` metrics) |
 | OTEL_ENABLE_BOTO | `false` | Set to `true` to enable tracing of DynamoDB and SQS calls |
 | OTEL_ENABLE_OTLP_EXPORTER | `true` | Set to `false` to disable the OTLP exporter (e.g. when no collector is running) |
 | OTEL_ENABLE_METRICS | `true` | Set to `false` to disable OTLP metrics export |
