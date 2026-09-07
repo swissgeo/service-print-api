@@ -7,7 +7,7 @@ from typing import Any
 import aioboto3
 
 from app.core.aws import botocore_config
-from app.core.metrics import SQS_SEND_ERROR, record_message_sent
+from app.core.metrics import ErrorType, record_message_sent
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ async def send_to_queue(message: dict[str, Any], session: aioboto3.Session) -> N
             )
             logger.info("Message sent to SQS queue %s", settings.sqs_queue_name)
     except Exception:
-        record_message_sent(error_type=SQS_SEND_ERROR)
+        record_message_sent(error_type=ErrorType.SQS_SEND_ERROR)
         raise
     else:
         record_message_sent()
