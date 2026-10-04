@@ -23,7 +23,7 @@ dependencies = [
     "opentelemetry-instrumentation-botocore==0.64b0",
     "opentelemetry-instrumentation-fastapi==0.64b0",
     "fastapi[standard]~=0.138",
-    "uvloop~=0.22.1",
+    "uvloop~=0.23.0",
     "httptools~=0.8.0",
 ]
 
