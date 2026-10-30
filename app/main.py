@@ -112,7 +112,7 @@ async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONR
 
 @app.exception_handler(Exception)
 async def handle_exception(_request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("Unhandled exception: %s", exc)
+    logger.error("Unhandled exception: %s", exc, exc_info=exc)
     return JSONResponse(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         content=ErrorResponse(

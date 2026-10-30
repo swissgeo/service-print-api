@@ -23,8 +23,8 @@ dependencies = [
     "opentelemetry-instrumentation-botocore==0.64b0",
     "opentelemetry-instrumentation-fastapi==0.64b0",
     "fastapi[standard]~=0.138",
-    "uvloop~=0.22.1",
-    "httptools~=0.8.0",
+    "uvloop~=0.23.0",
+    "httptools~=0.9.0",
 ]
 
 [dependency-groups]
@@ -83,6 +83,7 @@ ignore = [
     "TD",     # Ignore flake8-todos
     "FIX",    # Ignore fixme comments
     "COM812", # flak8-commas missing-trailing-comma is ignored to avoid conflict with formatter which enforces trailing commas
+    "CPY001", # Ignore missing copyright notice at top of file
     # Pydantic and FastAPI consume type annotations at runtime; keeping them
     # inside TYPE_CHECKING blocks causes subtle failures.
     "TC001",
